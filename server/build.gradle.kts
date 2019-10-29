@@ -1,9 +1,6 @@
 /*
  *
  */
-import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 buildscript {
   repositories {
@@ -47,22 +44,6 @@ application {
 }
 
 
-tasks {
-    test {                                  
-        testLogging.showExceptions = true
-        testLogging.displayGranularity  = 0
-	testLogging.events(TestLogEvent.FAILED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.STARTED)
-    }
-}
-
-
-// Unpack the fat jar so we can build the docker image in multiple steps
-// task<Copy>("unpack") {
-    // val bootJar = tasks.getByName<BootJar>("bootJar")
-    // dependsOn(bootJar)
-    // from(zipTree(bootJar.outputs.files.singleFile))
-    // into("build/dependency")
-// }
 
 
 

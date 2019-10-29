@@ -24,16 +24,16 @@ import java.util.stream.Collector;
  * and then the sequence. This means that you can iterate this data structure in order to reassemble the
  * log file. You can also pull out different log files or logfile/session versions.
  */
-class FileNameCollector implements Collector<
-	FileName,
-	TreeMap<String,TreeMap<Long, TreeMap<Long, FileName>>>,
-	TreeMap<String,TreeMap<Long,TreeMap<Long, FileName>>>
+class PBLogFileCollector implements Collector<
+	PBLogFile,
+	TreeMap<String,TreeMap<Long, TreeMap<Long, PBLogFile>>>,
+	TreeMap<String,TreeMap<Long,TreeMap<Long, PBLogFile>>>
 	>
 	{
-		private static Logger s_log = LoggerFactory.getLogger(FileNameCollector.class);
+		private static final Logger s_log = LoggerFactory.getLogger(PBLogFileCollector.class);
 
 		@Override
-		public Supplier<TreeMap<String, TreeMap<Long, TreeMap<Long, FileName>>>> supplier() {
+		public Supplier<TreeMap<String, TreeMap<Long, TreeMap<Long, PBLogFile>>>> supplier() {
 			return TreeMap::new;
 		}
 
@@ -48,23 +48,23 @@ class FileNameCollector implements Collector<
 		 * @return
 		 */
 		@Override
-		public BiConsumer<TreeMap<String, TreeMap<Long, TreeMap<Long, FileName>>>, FileName> accumulator() {
+		public BiConsumer<TreeMap<String, TreeMap<Long, TreeMap<Long, PBLogFile>>>, PBLogFile> accumulator() {
 			return (acc,fName) -> {
 				String logFileName = fName.getLogFileName();
 				long session = fName.getSession();
 				long seq = fName.getSequence();
 
 
-				TreeMap<Long,TreeMap<Long, FileName>> forName = acc.computeIfAbsent(
+				TreeMap<Long,TreeMap<Long, PBLogFile>> forName = acc.computeIfAbsent(
 					logFileName,  (f) -> new TreeMap<>()
 				);
 
 
-				TreeMap<Long, FileName> forSession = forName.computeIfAbsent(
+				TreeMap<Long, PBLogFile> forSession = forName.computeIfAbsent(
 					session,  (f) -> new TreeMap<>()
 				);
 
-				FileName removed = forSession.put(seq, fName);
+				PBLogFile removed = forSession.put(seq, fName);
 				if( removed != null ) {
 					s_log.error("FileName Found Multiple Times: " + fName);
 				}
@@ -72,28 +72,28 @@ class FileNameCollector implements Collector<
 		}
 
 		@Override
-		public BinaryOperator<TreeMap<String, TreeMap<Long, TreeMap<Long, FileName>>>> combiner() {
+		public BinaryOperator<TreeMap<String, TreeMap<Long, TreeMap<Long, PBLogFile>>>> combiner() {
 
 			return (a,b) -> {
 
-				for( Map.Entry<String, TreeMap<Long, TreeMap<Long, FileName>>> entriesB : b.entrySet()) {
+				for( Map.Entry<String, TreeMap<Long, TreeMap<Long, PBLogFile>>> entriesB : b.entrySet()) {
 					String logFileNameB = entriesB.getKey();
 					if( !a.containsKey(logFileNameB)) {
 						a.put(logFileNameB, entriesB.getValue());
 					} else {
 						// We have some entries for this logfile
-						TreeMap<Long, TreeMap<Long, FileName>> forLogFileA = a.get(logFileNameB);
+						TreeMap<Long, TreeMap<Long, PBLogFile>> forLogFileA = a.get(logFileNameB);
 
 
-						TreeMap<Long, TreeMap<Long, FileName>>  bySessionB = entriesB.getValue();
-						for( Map.Entry<Long, TreeMap<Long, FileName>> entriesSessionB : bySessionB.entrySet()) {
+						TreeMap<Long, TreeMap<Long, PBLogFile>>  bySessionB = entriesB.getValue();
+						for( Map.Entry<Long, TreeMap<Long, PBLogFile>> entriesSessionB : bySessionB.entrySet()) {
 							Long session = entriesSessionB.getKey();
 							if( !forLogFileA.containsKey(session)) {
 								forLogFileA.put(session, entriesSessionB.getValue());
 							} else {
 								// log file a has this session - we should be able to just put ALL the B
 								// values into the a one
-								TreeMap<Long, FileName> bySequenceIDA = forLogFileA.get(session);
+								TreeMap<Long, PBLogFile> bySequenceIDA = forLogFileA.get(session);
 								bySequenceIDA.putAll(entriesSessionB.getValue());
 							}
 						}
@@ -106,7 +106,7 @@ class FileNameCollector implements Collector<
 		}
 
 		@Override
-		public Function<TreeMap<String, TreeMap<Long, TreeMap<Long, FileName>>>, TreeMap<String, TreeMap<Long, TreeMap<Long, FileName>>>> finisher() {
+		public Function<TreeMap<String, TreeMap<Long, TreeMap<Long, PBLogFile>>>, TreeMap<String, TreeMap<Long, TreeMap<Long, PBLogFile>>>> finisher() {
 			return Function.identity();
 		}
 

@@ -13,12 +13,12 @@ class PathForLogChunkWorkList {
 	private static final int s_maxPaths = 1000;
 
 	// ordered list of Paths to process. We try to process them in the order sent
-	private LinkedList<Path> d_workList = new LinkedList<>();
+	private final LinkedList<Path> d_workList = new LinkedList<>();
 	// This is just a set that is used to track all the Paths in the list
-	private HashSet<Path> d_workListSet = new HashSet<>();
+	private final HashSet<Path> d_workListSet = new HashSet<>();
 
 	// The set of paths that we are working on
-	private HashSet<Path> d_processingSet = new HashSet<>();
+	private final HashSet<Path> d_processingSet = new HashSet<>();
 
 
 	/**

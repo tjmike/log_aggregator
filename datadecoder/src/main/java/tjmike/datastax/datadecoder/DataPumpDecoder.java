@@ -48,18 +48,18 @@ public class DataPumpDecoder {
 	private Path d_rebuiltLogDir;
 
 
-	private static Logger s_log = LoggerFactory.getLogger(DataPumpDecoder.class);
+	private static final Logger s_log = LoggerFactory.getLogger(DataPumpDecoder.class);
 
 
 
 
 	// This is not static because this is a component and there should only be one instance
 	// in the app
-	private Semaphore d_lastIndexLock = new Semaphore(1);
+	private final Semaphore d_lastIndexLock = new Semaphore(1);
 
 	// The last index for the given log file session (log file + session)
 	// This is populated at startup and updated when we do a write.
-	private Map<String, Long> d_lastIndexes = new HashMap<>();
+	private final Map<String, Long> d_lastIndexes = new HashMap<>();
 
 
 
@@ -76,7 +76,7 @@ public class DataPumpDecoder {
 	 * We maintain a different log per agent session.
 	 * @param fName
 	 */
-	private void appendChunkToLog(FileName fName) {
+	private void appendChunkToLog(PBLogFile fName) {
 		String reconstitutedName  = generateReconstitutedFileName(fName);
 		Path target = d_rebuiltLogDir.resolve(reconstitutedName);
 		Path dbgTarget = d_rebuiltLogDir.resolve(reconstitutedName + "." + fName.getSequence() + "_" + System.currentTimeMillis());
@@ -121,7 +121,7 @@ public class DataPumpDecoder {
 	 * @param fName
 	 * @return
 	 */
-	private boolean notYetProcessed(FileName fName) {
+	private boolean notYetProcessed(PBLogFile fName) {
 		String lastSeqFileName = generateLastSequenceFileName(fName);
 		long lastRead = getLastIndex(lastSeqFileName);
 		return fName.getSequence() > lastRead;
@@ -197,7 +197,7 @@ public class DataPumpDecoder {
 	 * @param fName
 	 * @return
 	 */
-	private String generateReconstitutedFileName(FileName fName) {
+	private String generateReconstitutedFileName(PBLogFile fName) {
 		String logFileName = fName.getLogFileName();
 		long session = fName.getSession();
 		return logFileName + "." + session;
@@ -210,14 +210,14 @@ public class DataPumpDecoder {
 	 * @param fname
 	 * @return
 	 */
-	private String generateLastSequenceFileName(FileName fname) {
+	private String generateLastSequenceFileName(PBLogFile fname) {
 		return fname.getLogFileName() + "_" + fname.getSession() + ".lastSeq";
 	}
 
 
 	// write the last index we processed to a file and the lastIndexs map
 	//
-	private void writeLastIndex(FileName fName) {
+	private void writeLastIndex(PBLogFile fName) {
 		try {
 			d_lastIndexLock.acquire();
 
@@ -310,17 +310,17 @@ public class DataPumpDecoder {
 	@SuppressWarnings("unused") // this will get called via Camelrouting
 	public void processDirectory() {
 
-		File[] filesToConsider = getPBDataFiles();
+		File[] pbFilesToConsider = getPBDataFiles();
 
-		if( filesToConsider != null ) {
+		if( pbFilesToConsider != null ) {
 
 
 
 			// create ordered data structure of files for processing
-			TreeMap<String, TreeMap<Long, TreeMap<Long, FileName>>> byName =
-				Arrays.stream(filesToConsider)
-					.map((f) -> new FileName(f.toPath()))
-					.collect(new FileNameCollector() )
+			TreeMap<String, TreeMap<Long, TreeMap<Long, PBLogFile>>> byName =
+				Arrays.stream(pbFilesToConsider)
+					.map((f) -> new PBLogFile(f.toPath()))
+					.collect(new PBLogFileCollector() )
 			;
 			processCandidates(byName);
 
@@ -330,30 +330,28 @@ public class DataPumpDecoder {
 
 
 	// key is the log file name , next key is the session, next key is the sequence number
-	private void processCandidates(TreeMap<String, TreeMap<Long, TreeMap<Long, FileName>>> byName) {
+	private void processCandidates(TreeMap<String, TreeMap<Long, TreeMap<Long, PBLogFile>>> byName) {
 
-		for( Map.Entry<String, TreeMap<Long, TreeMap<Long, FileName>>> entriesByName : byName.entrySet() ) {
+		for( Map.Entry<String, TreeMap<Long, TreeMap<Long, PBLogFile>>> entriesByName : byName.entrySet() ) {
 
 			String logFileName = entriesByName.getKey();
-			TreeMap<Long, TreeMap<Long, FileName>> bySession = entriesByName.getValue();
+			TreeMap<Long, TreeMap<Long, PBLogFile>> bySession = entriesByName.getValue();
 
-			for( Map.Entry<Long, TreeMap<Long, FileName>> entriesBySession : bySession.entrySet() ) {
+			for( Map.Entry<Long, TreeMap<Long, PBLogFile>> entriesBySession : bySession.entrySet() ) {
 				long session = entriesBySession.getKey();
 
-				s_log.info("******************************************************************");
+				TreeMap<Long, PBLogFile> logSessionBySequence = entriesBySession.getValue();
 
-				TreeMap<Long, FileName> logSessionBySequence = entriesBySession.getValue();
-
-				for( Map.Entry<Long,FileName>  entriesBySeq : logSessionBySequence.entrySet() ) {
+				for( Map.Entry<Long, PBLogFile>  entriesBySeq : logSessionBySequence.entrySet() ) {
 					long seq = entriesBySeq.getKey();
-					FileName fName = entriesBySeq.getValue();
+					PBLogFile fName = entriesBySeq.getValue();
 
 					long prevSeq = getLastIndex(generateLastSequenceFileName(fName));
 
-					{
-						String msg = String.format("CONSIDERx: Name:%s Session:%d Seq:%d  PREVSeq: %d "
+					if( s_log.isDebugEnabled() ) {
+						String msg = String.format("CONSIDER: Name:%s Session:%d Seq:%d  PREVSeq: %d "
 							, logFileName, session, seq, prevSeq);
-						s_log.info(msg);
+						s_log.debug(msg);
 					}
 
 
@@ -362,7 +360,7 @@ public class DataPumpDecoder {
 					if( prevSeq == 0 ) {
 
 						if(notYetProcessed(fName)) {
-							String msg = String.format("PROCESSa: %s %d %d ", logFileName, session, seq);
+							String msg = String.format("PROCESS: %s %d %d ", logFileName, session, seq);
 							s_log.info(msg);
 							appendChunkToLog(fName);
 						} else {
@@ -375,7 +373,7 @@ public class DataPumpDecoder {
 						// only process the next expected sequence
 						// there's no facility for skipping missing chunks
 						if( delta == 1 ) {
-							String msg = String.format("PROCESSb: %s %d %d ", logFileName, session, seq);
+							String msg = String.format("PROCESS: %s %d %d ", logFileName, session, seq);
 							s_log.info(msg);
 							appendChunkToLog(fName);
 						} else {
@@ -387,7 +385,6 @@ public class DataPumpDecoder {
 
 					}
 				}
-				s_log.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 			}
 		}
 	}

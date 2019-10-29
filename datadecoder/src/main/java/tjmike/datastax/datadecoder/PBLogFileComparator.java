@@ -10,9 +10,9 @@ import java.util.Comparator;
  * <li>Sequence</li>
  * </ol>
  */
-class FileNameComparator implements Comparator<FileName> {
+class PBLogFileComparator implements Comparator<PBLogFile> {
 	@Override
-	public int compare(FileName a, FileName b) {
+	public int compare(PBLogFile a, PBLogFile b) {
 		int ret = a.getLogFileName().compareTo(b.getLogFileName());
 		if( ret != 0 ) return ret;
 

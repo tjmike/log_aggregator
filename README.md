@@ -2,11 +2,12 @@
 
 ## To run the program
 These instructions have been tested on a Mac. I would expect them to work on Linux as well. This 
-project was build and tested with JDK11.
+project was built and tested with JDK11. The web server uses port 8080.
+
 
 1) Get a copy (clone or unzip)
-2) ```cd datastax```
-3) ```gradle build```
+2) ```cd log_aggregator```
+3) ```./gradlew build```
 4) make a logs directory - so we can redirect stderr and stdout ``mkdir logs`` 
 5) run the agent ```java -jar agent/build/libs/agent.jar > logs/agent.out 2>&1 &```
 6) run the datapump ```java -jar datapump/build/libs/datapump.jar > logs/datapump.out 2>&1 &```
@@ -34,7 +35,7 @@ project was build and tested with JDK11.
 
     ```curl http://localhost:8080/throttle?seconds=-1```
 
-12) Test the backpressure to 2 minutes:
+12) Change the backpressure to 2 minutes:
 
     ```curl http://localhost:8080/throttle?seconds=120```
     
@@ -49,8 +50,10 @@ project was build and tested with JDK11.
      2019-10-28 22:25:18.728  INFO 40052 --- [  DPumpPusher-1] tjmike.datastax.datapump.AsyncPusher     : PUSH: log3.log_1572314081_260.pbData Code: 200 Message: Throttle: 120
     ```
     
-    We can see tha the the the DataPumPusher got the throttle message and went too sleep for 2 minutes.
+    We can see tha the the the DataPumpPusher got the throttle message and went to sleep for 2 minutes. This
+    example is for DPumpPusher-1. There are 5 threads for the data pump. They should all behave the same.
     
+   
     Set the backpressure to 0 seconds:
     
     ```curl http://localhost:8080/throttle?seconds=0```
@@ -70,17 +73,21 @@ project was build and tested with JDK11.
     [6]-  Running                 nohup ./src/test/logGen > LogSource/log2.log &
     [7]+  Running                 nohup ./src/test/logGen > LogSource/log3.log &
    
-    kill %5 %6 %6
+    kill %5 %6 %7
     ```
        
-    Killing these stops the data 
+   Now that all three logGen jobs have been stopped we can perform another test. If the throttle setting has been
+   put back to 0 for a couple of minutes then the data should catch up quickly. This can be tested by
+   performing a diff on the input and output files:
+       
     ```
     diff  LogSource/log1.log ServerLog/log1.log*[0-9]
     diff  LogSource/log2.log ServerLog/log2.log*[0-9]
     diff  LogSource/log3.log ServerLog/log3.log*[0-9]
     ```
     
-    These files should be the same.
+    These files should be the same. The output log file has the session id (UNIX timestamp of when the agent 
+    was started) appended to it. This allows us to differentiate between loger sessions.  
     
     Kill the rest of the processes 
      
@@ -88,7 +95,12 @@ project was build and tested with JDK11.
     ```
     kill %1 %2 %3 %4
     '''
-        
+
+## Multiple Clients
+The server supports multiple clients as long as the rules are followed. Each log file name must be unique. 
+Multiple agent instances may be run, sharing the same datapump, or multiple instance/datapump pair may be run.
+It should be possible to run the agent/datapump pair on multiple hosts too. 
+
     
 ## Solution Discussion
 
@@ -96,12 +108,12 @@ project was build and tested with JDK11.
 ![High Level Operation Diagram](images/HighLevelOperation.png)
 
 
-Below is a discussion of each componenent. 
+Below is a discussion of each component. 
 
 ## Subprojects:
 
 ### agent
-- Tailer + Packetizer
+- Tail and encode 
   - Monitor multiple log files via continuous tail
   - Accept a log chunk and serialize into a protocol buffer
   - Save the serialized Protocol Buffer (cache chunks) to a local cache
@@ -142,8 +154,11 @@ http://localhost:8080/throttle?seconds=60
 ``` 
 
 tells the server to inform clients to delay by the amount specified. This request also returns 
-the current throttle setting. A request < 0 will be ignorred but the current setting will be returned.
+the current throttle setting. A request < 0 will be ignored but the current setting will be returned.
 
+For a better throttle strategy a separate process could monitor key metrics such as disk space,  bandwidth, load, etc. 
+and the process could tell the server what throttling should be set. The command to the server could be more sophisticated
+too. For example, the command could accept a logID and could then set throttling values on a per log basis.
 
 
 ### datadecoder
@@ -174,6 +189,33 @@ a unique string id.The session is the milliseconds since the UNIX epoch from whe
 Within the context of a session the seq is the sequence of he log chunk, starting at 1. The payload is the binary log data. The log
 server makes no assumption about the nature of the log file, it just captures bytes.
 
+### Protocol Specification
+- A log file has a globally unique name string (id). 
+
+- Every logging session for a particular log file has sessionID that's unique to that log file. 
+  The sessionID must increase for each logging agent session. The unix millis timestamp is a good
+  candidate for this id.
+
+- Every logging chunk must have a sequence that starts at one and increases by one for each chunk.
+
+- There are no constraints on the payload and it's opaque to the system. Very small payloads will be 
+  inefficient and large ones will use a lot of resources and cause delays in the system. Extremely large 
+  payloads will likely cause instability. 
+
+- Logging chunks must be serialized into protocol buffers (v3). See the LogPart message definition above.
+
+- The protocol buffer chunks are sent to the server via an HTTP Post to the path /data. A 200 reply means
+  the post was accepted and the sender need not keep that buffer around anymore. 
+  
+- The server will reply to every post with a Throttle command. The client is expected to back off sending data
+  for the number of seconds specified in the command. 
+  
+- The client is responsible for ensuring that buffer segments are sequential and increase by a value of 1. 
+  The server will not assemble log entries if a segment is missing.
+  
+- Log segments need not arrive at the server in order.  
+
+
 
 ### How would you change the protocol to allow each agent to aggregate multiple log files concurrently?
 
@@ -182,7 +224,9 @@ and to continuously poll for new data. The protocol has the concept of an ID tha
 The ID could be defined differently. For example rather than log file name it could be a url describing a unique host 
 and file on that host. 
 
-It would be possible to add more fields to the protocol as well to better identify unique hosts and log files.
+It would be possible to add more fields to the protocol as well to better identify logs. Examples include 
+ hosts, applications, instances etc. These fields could be incorporated into the name to support some form of 
+ routing.
 
 
 ### How would you design the system to allow aggregation from hundreds of thousands of agents?
@@ -213,7 +257,7 @@ appear to have a negative impact on the program. I would try to resolve this bef
 
 
 
-***
+***********************************************************************************
 
 # Original Problem
 

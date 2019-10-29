@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -15,14 +16,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Future;
 
+/**
+ * This class is responsible for accepting request to push files to a a server using http.
+ */
 @Service
 public class AsyncPusher {
 
-	PathForLogChunkWorkList d_workQueue = new PathForLogChunkWorkList();
+	/**
+	 * An order list of work items.
+	 */
+	private final PathForLogChunkWorkList d_workQueue = new PathForLogChunkWorkList();
 
 	private final HttpClient d_httpClient;
 
-	private static Logger s_log = LoggerFactory.getLogger(AsyncPusher.class);
+	private static final Logger s_log = LoggerFactory.getLogger(AsyncPusher.class);
 
 	@Value("${datapump.server.path}")
 	private String d_webServerPath;
@@ -50,12 +57,18 @@ public class AsyncPusher {
 
 
 	/**
-	 * Request that this path be pushed.
-	 * This is a bit of a hack. The thread worker model needs to be changed some.
-	 * This method call is a workaround.
 	 *
-	 * When push is called, if all the threads are blocked, sleeping for example, the
-	 * path won't make it to the queue. The call helps to ensure
+	 * Request that this path be pushed.
+	 *
+	 * The use case is to call this followed by push().
+	 * This method ensures the the work request is accepted. If all the threads are running then
+	 * pus() request will be dropped.
+	 *
+	 * The push() is sort of like a notify(). It ensures that if there's no thread
+	 * processing the requests that one gets started.
+	 *
+	 * A better approach would be to not have to follow the requestPathPush() with a push()...
+	 *
 	 * @param pathToPush
 	 */
 	void requestPathPush(Path pathToPush) {
@@ -79,7 +92,6 @@ public class AsyncPusher {
 
 			boolean success = false;
 			try {
-				// TODO constant for extensions (tmp, etc)
 				{
 					if( Files.exists(pathToWorkOn)) {
 
@@ -114,12 +126,12 @@ public class AsyncPusher {
 							String.format("PUSH: %s Code: %d Message: %s", pathToWorkOn.getFileName(), code, msg)
 						);
 
-
-
-						// If there were no errors then delete the the file
-						// TODO stop processing the current data set on error - throw runtime exception?
-						Files.delete(pathToWorkOn);
-						success = true;
+						// only delete the file and send success if we got an OK code from the server
+						if( code  == HttpURLConnection.HTTP_OK) {
+							// If there were no errors then delete the the file
+							Files.delete(pathToWorkOn);
+							success = true;
+						}
 
 
 					} else {
@@ -138,7 +150,6 @@ public class AsyncPusher {
 				} else {
 					d_workQueue.handlePathFailed(pathToWorkOn);
 				}
-//					removePushing(p);
 			}
 
 
@@ -156,6 +167,8 @@ public class AsyncPusher {
 
 			pathToWorkOn = d_workQueue.beginWork();
 		}
+
+		// This value is not checked.
 		return new AsyncResult<>(true);
 	}
 

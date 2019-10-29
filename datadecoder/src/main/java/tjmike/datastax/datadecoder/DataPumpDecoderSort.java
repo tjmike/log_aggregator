@@ -27,9 +27,9 @@ import java.util.stream.Collectors;
 @Component("DataPumpDecoderSort")
 public class DataPumpDecoderSort {
 
-	private static Logger s_log = LoggerFactory.getLogger(DataPumpDecoderSort.class);
-	private SequenceTracker d_sequenceTracker;
-	private PathProvider    d_pathProvider;
+	private static final Logger s_log = LoggerFactory.getLogger(DataPumpDecoderSort.class);
+	private final SequenceTracker d_sequenceTracker;
+	private final PathProvider  d_pathProvider;
 
 
 	@Autowired
@@ -52,7 +52,7 @@ public class DataPumpDecoderSort {
 	 *
 	 * @param fName
 	 */
-	private void appendChunkToLog(FileName fName) {
+	private void appendChunkToLog(PBLogFile fName) {
 		String reconstitutedName  = generateReconstitutedFileName(fName);
 
 
@@ -90,7 +90,7 @@ public class DataPumpDecoderSort {
 	 * @param fName
 	 * @return
 	 */
-	private String generateReconstitutedFileName(FileName fName) {
+	private String generateReconstitutedFileName(PBLogFile fName) {
 		String logFileName = fName.getLogFileName();
 		long session = fName.getSession();
 		return logFileName + "." + session;
@@ -114,13 +114,13 @@ public class DataPumpDecoderSort {
 
 		if( filesToConsider != null ) {
 
-			List<FileName> fileNames = Arrays.stream(filesToConsider)
-				.map((f) -> new FileName(f.toPath()))
-				.sorted(new FileNameComparator())
+			List<PBLogFile> pbLogFiles = Arrays.stream(filesToConsider)
+				.map((f) -> new PBLogFile(f.toPath()))
+				.sorted(new PBLogFileComparator())
 				.collect(Collectors.toList())
 				;
 
-			processCandidates(fileNames);
+			processCandidates(pbLogFiles);
 
 		}
 	}
@@ -130,22 +130,22 @@ public class DataPumpDecoderSort {
 	 *
 	 * Attempt to process all the FileNames provided. We assume the files have been sorted as defined in:
 	 *
-	 * @see FileNameComparator
+	 * @see PBLogFileComparator
 	 *
-	 * @param fileNames - order list of FileNames
+	 * @param pbLogFiles - order list of FileNames
 	 */
-	private void processCandidates(List<FileName> fileNames) {
-		for(FileName fName : fileNames ) {
+	private void processCandidates(List<PBLogFile> pbLogFiles) {
+		for(PBLogFile fName : pbLogFiles) {
 			String logFileName = fName.getLogFileName();
 			long session = fName.getSession();
 			long seq = fName.getSequence();
 
 			long lastProcessedSeq = d_sequenceTracker.getLastIndex(fName);
 
-			if( s_log.isInfoEnabled() ) {
+			if( s_log.isDebugEnabled() ) {
 				String msg = String.format("CONSIDER: Name:%s Session:%d Seq:%d  Last Processed: %d"
 					, logFileName, session, seq, lastProcessedSeq);
-				s_log.info(msg);
+				s_log.debug(msg);
 			}
 
 			// this is the expected sequence number
@@ -153,9 +153,9 @@ public class DataPumpDecoderSort {
 
 			if( seq == expectedSeq ) {
 				// process the expected sequence
-				if( s_log.isInfoEnabled() ) {
-					String msg = String.format("PROCESS FoundNex: %s %d %d ", logFileName, session, seq);
-					s_log.info(msg);
+				if( s_log.isDebugEnabled() ) {
+					String msg = String.format("PROCESS Found Next: %s %d %d ", logFileName, session, seq);
+					s_log.debug(msg);
 				}
 				appendChunkToLog(fName);
 

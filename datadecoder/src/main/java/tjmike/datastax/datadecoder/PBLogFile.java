@@ -1,20 +1,23 @@
 package tjmike.datastax.datadecoder;
 
+
 import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class FileName implements Comparable<FileName> {
-	private Path d_originalPath;
+/**
+ * Represents a log and associated metadata.
+ */
+class PBLogFile implements Comparable<PBLogFile> {
+	private final Path d_originalPath;
 	private String d_logFileName;
 	private long d_session;
 	private long d_sequence;
 
-	// TODO centralize .pbData references
-	private static final Pattern s_compilePattern = Pattern.compile("(.*)_(\\d*)_(\\d*).pbData");
+	private static final Pattern s_compilePattern = Pattern.compile("(.*)_(\\d*)_(\\d*)" + PathProvider.s_PBDataExtension);
 
 
-	FileName(Path pbDataFilePath) {
+	PBLogFile(Path pbDataFilePath) {
 		d_originalPath = pbDataFilePath;
 		Matcher mm = s_compilePattern.matcher(pbDataFilePath.getFileName().toString());
 		if( mm.matches()) {
@@ -22,7 +25,6 @@ class FileName implements Comparable<FileName> {
 			d_session = Long.parseLong(mm.group(2));
 			d_sequence = Long.parseLong(mm.group(3));
 		}
-//		LoggerFactory.getLogger(FileName.class).warn("CREATE: " + this);
 	}
 
 	Path getOriginalPath() {
@@ -47,7 +49,7 @@ class FileName implements Comparable<FileName> {
 	}
 
 	@Override
-	public int compareTo(FileName o) {
+	public int compareTo(PBLogFile o) {
 		int ret = d_logFileName.compareTo(o.d_logFileName);
 		if( ret != 0 ) { return ret; }
 
@@ -62,13 +64,13 @@ class FileName implements Comparable<FileName> {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (!(o instanceof FileName)) return false;
+		if (!(o instanceof PBLogFile)) return false;
 
-		FileName fileName = (FileName) o;
+		PBLogFile pbLogFile = (PBLogFile) o;
 
-		if (d_session != fileName.d_session) return false;
-		if (d_sequence != fileName.d_sequence) return false;
-		return d_logFileName.equals(fileName.d_logFileName);
+		if (d_session != pbLogFile.d_session) return false;
+		if (d_sequence != pbLogFile.d_sequence) return false;
+		return d_logFileName.equals(pbLogFile.d_logFileName);
 	}
 
 	@Override

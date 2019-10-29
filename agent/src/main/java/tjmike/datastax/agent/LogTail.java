@@ -18,17 +18,17 @@ import org.slf4j.LoggerFactory;
  */
 class LogTail {
 
-	private static Logger s_log = LoggerFactory.getLogger(LogTail.class);
+	private static final Logger s_log = LoggerFactory.getLogger(LogTail.class);
 
 	/**
 	 * The log file we are tailing
 	 */
-	private Path d_path;
+	private final Path d_path;
 
 	/**
 	 * Session id to be associated with log data packets
 	 */
-	private long d_sessionID;
+	private final long d_sessionID;
 
 	/**
 	 * Sequence id of data packets
@@ -52,14 +52,6 @@ class LogTail {
 	 * Total number of bytes read from this file. The can be reset if the file is rotated or truncated.
 	 */
 	private long d_totalRead = 0;
-
-	/**
-	 * Total number of times poll was called but there was no change
-	 */
-	private long d_totalMisses = 0;
-
-
-	private static Logger logger = LoggerFactory.getLogger(LogAgent.class);
 
 
 	/**
@@ -119,8 +111,8 @@ class LogTail {
 
 			BasicFileAttributes attrs = Files.readAttributes(d_path, BasicFileAttributes.class);
 			if( d_attrs == null ) {
-				if( logger.isInfoEnabled()) {
-					logger.info(d_path.getFileName().toString() + ": NEW FILE : RESET INPUT");
+				if( s_log.isInfoEnabled()) {
+					s_log.info(d_path.getFileName().toString() + ": NEW FILE : RESET INPUT");
 				}
 				d_attrs = attrs;
 				resetInputStream(false);
@@ -136,8 +128,8 @@ class LogTail {
 				long latestSize = attrs.size();
 
 
-				if( logger.isInfoEnabled()) {
-					logger.info(d_path.getFileName().toString() + ": lastestSize = " + latestSize
+				if( s_log.isInfoEnabled()) {
+					s_log.info(d_path.getFileName().toString() + ": lastestSize = " + latestSize
 						+ " totalRead= " + d_totalRead);
 				}
 
@@ -165,7 +157,7 @@ class LogTail {
 			status =  STATUS.DELETED;
 		}
 
-		logger.info(d_path.getFileName().toString() + ": current status =  " + status.name() );
+		s_log.info(d_path.getFileName().toString() + ": current status =  " + status.name() );
 
 
 		return status;
@@ -190,6 +182,7 @@ class LogTail {
 		d_attrs = Files.readAttributes(d_path, BasicFileAttributes.class);
 	}
 
+
 	private void resetInputStream(boolean shouldSeek) throws IOException {
 		long seek = 0;
 		if( d_inputStream != null ) {
@@ -210,15 +203,18 @@ class LogTail {
 		}
 	}
 	private int read(byte[] data) throws IOException {
-		logger.info("READ BEGIN : total read = " + d_totalRead);
+		if( s_log.isDebugEnabled() ) {
+			s_log.debug("READ BEGIN : total read = " + d_totalRead);
+		}
 		int nread = d_inputStream.read(data);
 		if (nread > 0) {
 			d_totalRead += nread;
 
 			++d_sequence;
 		}
-		logger.info("READ END : total read = " + d_totalRead);
-
+		if( s_log.isDebugEnabled() ) {
+			s_log.debug("READ END : total read = " + d_totalRead);
+		}
 		return nread;
 	}
 
@@ -245,10 +241,10 @@ class LogTail {
 		switch (status ) {
 			case NEWDATA:
 				nRead = read(data);
-				logger.info(d_path.getFileName().toString() + " : NEW DATA : nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : NEW DATA : nread=" + nRead );
 				break;
 			case UNCHANGED:
-				logger.info(d_path.getFileName().toString() + " : UNCHANGED : nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : UNCHANGED : nread=" + nRead );
 				break;
 			case MOVED:
 				//
@@ -258,41 +254,32 @@ class LogTail {
 				// data will be lost if we restart in the middle of this
 				//
 				nRead = read(data);
-				logger.info(d_path.getFileName().toString() + " : READ OLD FILE: nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : READ OLD FILE: nread=" + nRead );
 
 				if( nRead < 0 ) {
 					setAttrs();
 					resetInputStream(false);
 					nRead = read(data);
 
-					logger.info(d_path.getFileName().toString() + " : READ NEW FILE: nread=" + nRead );
+					s_log.info(d_path.getFileName().toString() + " : READ NEW FILE: nread=" + nRead );
 
 				}
-				logger.info(d_path.getFileName().toString() + " : MOVED FILE: nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : MOVED FILE: nread=" + nRead );
 				break;
 			case DELETED:
 				nRead = 0;
-				logger.info(d_path.getFileName().toString() + " : DELETED FILE: nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : DELETED FILE: nread=" + nRead );
 				break;
 			case TRUNCATED:
 				resetInputStream(false);
 				nRead = read(data);
-				logger.info(d_path.getFileName().toString() + " : TRUNCATED FILE: nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : TRUNCATED FILE: nread=" + nRead );
 				break;
 			default:
-				logger.error("Error unexpected status: " + status.name());
+				s_log.error("Error unexpected status: " + status.name());
 		}
 
-
-		if( nRead > 0 ) {
-			d_totalMisses = 0;
-		} else {
-			++d_totalMisses;
-		}
 		return new LogTailResult(d_sessionID,d_path.getFileName().toString(),d_sequence, nRead, status);
 	}
 
-//	public long getTotalMisses() {
-//		return d_totalMisses;
-//	}
 }

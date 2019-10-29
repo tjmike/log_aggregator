@@ -33,20 +33,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation(files("../proto/build/libs/proto.jar"))
 
-    // Use JUnit Jupiter API for testing.
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
-
-    // Use JUnit Jupiter Engine for testing.
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
 
 }
 
 application {
     mainClassName = "tjmike.datastax.agent.LogAgent"
-}
-
-val test by tasks.getting(Test::class) {
-    useJUnitPlatform()
 }
 
 

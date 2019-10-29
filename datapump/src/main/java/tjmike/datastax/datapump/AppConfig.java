@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
 public class AppConfig {
 
 
-	static class ThreadPool1 {
+	private static class ThreadPool1 {
 		// thread pool for pushing data via http
 		@Bean(name = "DPumpPusher")
 		public Executor taskExecutor() {
@@ -29,9 +29,9 @@ public class AppConfig {
 
 	}
 
-	static class ThreadPool2 {
-		// thread pool for directory processing
-		// must be single threaded.
+	private static class ThreadPool2 {
+		// thread for directory processing
+		// NOTE: must be a single thread - like AWT event thread
 		@Bean(name = "DirectoryProcessor")
 		public Executor taskExecutor() {
 			ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

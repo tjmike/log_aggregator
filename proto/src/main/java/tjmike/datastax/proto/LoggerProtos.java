@@ -151,7 +151,7 @@ public final class LoggerProtos {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
+     static com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return tjmike.datastax.proto.LoggerProtos.internal_static_proto_LogPart_descriptor;
     }
@@ -164,7 +164,7 @@ public final class LoggerProtos {
               tjmike.datastax.proto.LoggerProtos.LogPart.class, tjmike.datastax.proto.LoggerProtos.LogPart.Builder.class);
     }
 
-    public static final int ID_FIELD_NUMBER = 1;
+    static final int ID_FIELD_NUMBER = 1;
     private volatile java.lang.Object id_;
     /**
      * <code>string id = 1;</code>

@@ -20,16 +20,16 @@ import tjmike.datastax.proto.LoggerProtos;
  * Accept data associated metadata files and write them to a durable store.
  */
 @Service
-public class DataPumpAccept implements  DataPumper {
+public class DataPumpImpl implements  DataPumper {
 
-	private static Logger s_log = LoggerFactory.getLogger(DataPumpAccept.class);
+	private static final Logger s_log = LoggerFactory.getLogger(DataPumpImpl.class);
 
 	@Value("${Agent.LogCacheDir}")
 	private String d_logCacheDirName;
 
 	private File d_logCacheDir;
 
-	public DataPumpAccept() {
+	public DataPumpImpl() {
 //		d_cacheDir = cacheDir;
 	}
 

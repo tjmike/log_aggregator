@@ -1,0 +1,21 @@
+2019-10-29 02:02:07.811  INFO 37862 --- [main] tjmike.datastax.datapump.DataPump        : Starting DataPump on mymac with PID 37862 (/Users/mike/mm/code/dxs/log_aggregator/datapump/build/classes/java/main started by mike in /Users/mike/mm/code/dxs/log_aggregator/datapump)
+2019-10-29 02:02:07.816  INFO 37862 --- [main] tjmike.datastax.datapump.DataPump        : No active profile set, falling back to default profiles: default
+2019-10-29 02:02:09.014  INFO 37862 --- [main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.camel.spring.boot.CamelAutoConfiguration' of type [org.apache.camel.spring.boot.CamelAutoConfiguration$$EnhancerBySpringCGLIB$$95971385] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2019-10-29 02:02:09.436  INFO 37862 --- [main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService
+2019-10-29 02:02:09.440  INFO 37862 --- [main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'DirectoryProcessor'
+2019-10-29 02:02:09.447  INFO 37862 --- [main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService
+2019-10-29 02:02:09.449  INFO 37862 --- [main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'DPumpPusher'
+2019-10-29 02:02:09.615  WARN 37862 --- [main] o.a.c.i.e.DefaultCamelBeanPostProcessor  : No CamelContext defined yet so cannot inject into bean: properties
+2019-10-29 02:02:10.320  INFO 37862 --- [main] o.s.s.c.ThreadPoolTaskScheduler          : Initializing ExecutorService 'taskScheduler'
+2019-10-29 02:02:10.725  INFO 37862 --- [main] tjmike.datastax.datapump.AsyncPusher     : Watching: ./AgentLogCache as /Users/mike/mm/code/dxs/log_aggregator/datapump/./AgentLogCache
+2019-10-29 02:02:11.053  INFO 37862 --- [main] o.a.camel.spring.boot.RoutesCollector    : Loading additional Camel XML routes from: classpath:camel/*.xml
+2019-10-29 02:02:11.054  INFO 37862 --- [main] o.a.camel.spring.boot.RoutesCollector    : Loading additional Camel XML rests from: classpath:camel-rest/*.xml
+2019-10-29 02:02:11.113  INFO 37862 --- [main] o.a.c.s.boot.SpringBootCamelContext      : Apache Camel 3.0.0-RC2 (CamelContext: camel-1) is starting
+2019-10-29 02:02:11.114  INFO 37862 --- [main] o.a.c.management.JmxManagementStrategy   : JMX is enabled
+2019-10-29 02:02:11.706  INFO 37862 --- [main] o.a.c.s.boot.SpringBootCamelContext      : StreamCaching is not in use. If using streams then its recommended to enable stream caching. See more details at http://camel.apache.org/stream-caching.html
+2019-10-29 02:02:11.789  INFO 37862 --- [main] o.a.camel.spring.boot.RoutesCollector    : Starting CamelMainRunController to ensure the main thread keeps running
+2019-10-29 02:02:11.800  INFO 37862 --- [CamelMainRunController] org.apache.camel.main.MainSupport        : Using properties from classpath:application.properties
+2019-10-29 02:02:11.911  INFO 37862 --- [main] o.a.c.s.boot.SpringBootCamelContext      : Route: route1 started and consuming from: file-watch:///Users/mike/mm/code/dxs/log_aggregator/datapump/./AgentLogCache?events=CREATE
+2019-10-29 02:02:11.926  INFO 37862 --- [main] o.a.c.s.boot.SpringBootCamelContext      : Total 1 routes, of which 1 are started
+2019-10-29 02:02:11.932  INFO 37862 --- [main] o.a.c.s.boot.SpringBootCamelContext      : Apache Camel 3.0.0-RC2 (CamelContext: camel-1) started in 0.815 seconds
+2019-10-29 02:02:11.948  INFO 37862 --- [main] tjmike.datastax.datapump.DataPump        : Started DataPump in 4.758 seconds (JVM running for 6.625)

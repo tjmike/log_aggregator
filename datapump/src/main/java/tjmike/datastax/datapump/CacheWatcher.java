@@ -16,7 +16,7 @@ import java.io.File;
  */
 @Component
 public class CacheWatcher extends RouteBuilder {
-	private static Logger s_log = LoggerFactory.getLogger(AsyncPusher.class);
+	private static final Logger s_log = LoggerFactory.getLogger(AsyncPusher.class);
 
 	@Value("${Agent.LogCacheDir}")
 	private String d_cacheDir;
@@ -25,11 +25,17 @@ public class CacheWatcher extends RouteBuilder {
 	public void configure() {
 
 		File cacheWatcher = new File(d_cacheDir).getAbsoluteFile();
-		s_log.info(
-			String.format("Watching: %s as %s", d_cacheDir, cacheWatcher.getAbsolutePath()));
 
+		if( s_log.isInfoEnabled() ) {
+			s_log.info(
+				String.format("Watching: %s as %s", d_cacheDir, cacheWatcher.getAbsolutePath()));
+		}
+
+
+		// Set up the directory we're going to watch
 		String camelFrom = String.format("file-watch:%s?events=CREATE", cacheWatcher.getAbsolutePath());
 
+		// set up the watch - and fire events to DataPumpPusher.processDirectory()
 		from(camelFrom)
 			.to("bean:DataPumpPusher?method=processDirectory")
 		;

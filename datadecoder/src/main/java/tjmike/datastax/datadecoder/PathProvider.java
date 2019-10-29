@@ -18,7 +18,7 @@ import java.nio.file.Path;
 @Component("PathProvider")
 public class PathProvider {
 
-	private static final String s_PBDataExtension = ".pbData";
+	static final String s_PBDataExtension = ".pbData";
 
 	// Directory for the server log cache as a string
 	@Value("${Server.LogCacheDir}")
@@ -33,7 +33,7 @@ public class PathProvider {
 	// Directory for rebuilt logs
 	private Path d_rebuiltLogDir;
 
-	private static Logger s_log = LoggerFactory.getLogger(PathProvider.class);
+	private static final Logger s_log = LoggerFactory.getLogger(PathProvider.class);
 
 
 

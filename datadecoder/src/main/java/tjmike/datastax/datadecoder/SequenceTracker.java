@@ -24,21 +24,17 @@ import java.util.Map;
 @Component("SequenceTracker")
 public class SequenceTracker {
 
-
 	// Directory for the server log (rebuilt) as a string
 	@Value("${Server.LogDir}")
 	private String d_rebuiltLogDirName;
 	// Directory for rebuilt logs
 	private Path d_rebuiltLogDir;
 
-	private static Logger s_log = LoggerFactory.getLogger(SequenceTracker.class);
-
+	private static final Logger s_log = LoggerFactory.getLogger(SequenceTracker.class);
 
 	// The last index for the given log file session (log file + session)
 	// This is populated at startup and updated when we do a write.
-	private Map<String, Long> d_lastIndexes = new HashMap<>();
-
-
+	private final Map<String, Long> d_lastIndexes = new HashMap<>();
 
 	/**
 	 * Initialize directories and last sequence map.
@@ -58,7 +54,6 @@ public class SequenceTracker {
 			s_log.error(ex.getMessage(), ex);
 		}
 
-
 		// init the last processed map that keeps track of the last sequence number processed.
 		// This allows the decoder to be stopped and started without missing any data
 		try {
@@ -71,7 +66,6 @@ public class SequenceTracker {
 		}
 
 	}
-
 
 
 	/**
@@ -102,15 +96,13 @@ public class SequenceTracker {
 
 
 
-
-
 	/**
 	 * Get the last index we read for each session from our in memory map.
 	 *
 	 * @param fName
 	 * @return
 	 */
-	long getLastIndex(FileName fName ) {
+	long getLastIndex(PBLogFile fName ) {
 		long read = 0;
 
 		Long max = d_lastIndexes.get(generateLastSequenceFileName(fName));
@@ -121,17 +113,15 @@ public class SequenceTracker {
 	}
 
 
-
 	/**
 	 * Generate the file name for the file that contains the last sequence parsed for a given
 	 * file/session
 	 * @param fName
 	 * @return
 	 */
-	private String generateLastSequenceFileName(FileName fName) {
+	private String generateLastSequenceFileName(PBLogFile fName) {
 		return fName.getLogFileName() + "_" + fName.getSession() + ".lastSeq";
 	}
-
 
 
 	/**
@@ -139,14 +129,16 @@ public class SequenceTracker {
 	 *
 	 * @param fName
 	 */
-	void writeLastIndex(FileName fName) {
+	void writeLastIndex(PBLogFile fName) {
 		try {
 
 			// NOTE: we could, in theory, call this from a shutdown hook so we don't need to perform
 			// an open/write/close so often
 			String fileName = generateLastSequenceFileName(fName);
 			Path toWrite = d_rebuiltLogDir.resolve(fileName);
-			s_log.warn("WRITE IDX: " + toWrite.toString() + " idx: " + fName.getSequence() );
+			if( s_log.isDebugEnabled()) {
+				s_log.debug("WRITE IDX: " + toWrite.toString() + " idx: " + fName.getSequence());
+			}
 			try (BufferedWriter wOut = Files.newBufferedWriter(toWrite,
 				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING) ) {
 				wOut.write( fName.getSequence() + System.lineSeparator());

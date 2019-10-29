@@ -23,24 +23,21 @@ import java.nio.file.StandardCopyOption;
 
 
 /**
+ * A web server that accepts protobuffers via http post and stores them to disc for later processing.
  *
  */
 
 @RestController("tjmike.datastax.logServer.LogServerController")
 public class LogServerController {
-	private static Logger s_log = LoggerFactory.getLogger(LogServerController.class);
-
+	private static final Logger s_log = LoggerFactory.getLogger(LogServerController.class);
+	private static final String s_AliveMessage = "Log Server Is Alive";
 	// some metrics for this instance
 	private int counter = 0;
-
-
 
 	@Value("${Server.LogCacheDir}")
 	private String d_cacheDirectoryString;
 	private Path d_cachePath;
-
-
-   private boolean d_shutItDown = false;
+	private boolean d_shutItDown = false;
 
 	/**
 	 * A simple backoff  strategy - if the delay is set then we tell clients to back off pushing data
@@ -53,7 +50,6 @@ public class LogServerController {
  private void initCachePath() {
  	try {
 	 	File cacheFile = new File(d_cacheDirectoryString).getCanonicalFile();
-
 
 		if(!cacheFile.exists() ) {
 			boolean created = cacheFile.mkdirs();
@@ -91,7 +87,7 @@ public class LogServerController {
 
 	@RequestMapping("/")
 	public String index() {
-		return "Log server is alive";
+		return s_AliveMessage;
 	}
 
 
@@ -109,7 +105,6 @@ public class LogServerController {
 		}
 		return "Log server throttle = " + d_throttle;
 	}
-
 
 
 	private void save(LoggerProtos.LogPart lp ) throws IOException  {
@@ -131,12 +126,10 @@ public class LogServerController {
 
 		// perform atomic move
 		Files.move(tmpFile.toPath(), outFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
-
-
-
 	}
+
 	/**
-	 * Accept a protobuffer payload and stick it into a cache to be re-assembled.
+	 * Accept a protobuffer payload and stick it into an on disc cache to be re-assembled.
 	 * @param dataStream
 	 * @return
 	 * @throws Exception
@@ -144,9 +137,9 @@ public class LogServerController {
 	@RequestMapping(method = RequestMethod.POST, value = "/data")
 	public String acceptData(InputStream dataStream) throws Exception {
 
-
-		s_log.info("CACHE DIR = " + d_cachePath.toString());
-
+		if( s_log.isDebugEnabled() ) {
+			s_log.debug("CACHE DIR = " + d_cachePath.toString());
+		}
 		LoggerProtos.LogPart logPartRebuilt = LoggerProtos.LogPart.parseFrom(dataStream);
 
 		save(logPartRebuilt);
@@ -159,10 +152,6 @@ public class LogServerController {
 		long session = logPartRebuilt.getSession();
 		long seq = logPartRebuilt.getSeq();
 
-
-
-
-
 		if( s_log.isInfoEnabled() ) {
 			String msg = String.format("Name: %s Session: %d Seq: %d Payload: %d", id, session, seq, payloadSize);
 			s_log.info(msg);
@@ -173,10 +162,12 @@ public class LogServerController {
 			throttleSeconds = d_throttle;
 		}
 		return "Throttle: " + throttleSeconds;
-
-
 	}
 
+	/**
+	 *
+	 * @return number of buffers processed
+	 */
 	@RequestMapping("/count")
 	public String count() {
 		int count;
@@ -185,22 +176,6 @@ public class LogServerController {
 		}
 		return String.format("Count=%d", count);
 	}
-
-
-
-//	/**
-//	 * A default mapping so we don't
-//	 * @return
-//	 */
-//	@RequestMapping("*")
-//	public String defaultReply(HttpServletRequest request ) {
-//		String path = request.getServletPath();
-//		return String.format("Request not found: %s", path) ;
-		// in progress
-//		throw new NotFoundError("Request not found");
-//	}
-
-
 }
 
 

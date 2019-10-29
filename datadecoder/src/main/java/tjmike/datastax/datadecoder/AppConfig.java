@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
 @Configuration
 public class AppConfig {
 
-	private static Logger s_log = LoggerFactory.getLogger(AppConfig.class);
+	private static final Logger s_log = LoggerFactory.getLogger(AppConfig.class);
 
 	// we do all our protobuff decoding and appending work
 	// on this single thread. The primary reason for this is

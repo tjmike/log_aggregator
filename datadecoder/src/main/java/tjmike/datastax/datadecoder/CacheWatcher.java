@@ -15,9 +15,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class CacheWatcher extends RouteBuilder {
-	private static Logger s_log = LoggerFactory.getLogger(CacheWatcher.class);
+	private static final Logger s_log = LoggerFactory.getLogger(CacheWatcher.class);
 
-	private PathProvider d_pathProvider;
+	private final PathProvider d_pathProvider;
 
 	@Autowired
 	public CacheWatcher(CamelContext context, PathProvider pathProvider) {
@@ -38,7 +38,6 @@ public class CacheWatcher extends RouteBuilder {
 
 		from(camelFrom)
 			.to("bean:DataPumpDecoderSort?method=processDirectory")
-//			.to("bean:DataPumpDecoder?method=processDirectory")
 		;
 
 

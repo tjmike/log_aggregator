@@ -25,9 +25,9 @@ public class DataPumpPusher  {
 	// Directory for the agent log cache as a path - created from string
 	private Path d_logCacheDir;
 
-	private AsyncPusher d_asyncPusher;
+	private final AsyncPusher d_asyncPusher;
 
-	private static Logger s_log = LoggerFactory.getLogger(DataPumpPusher.class);
+	private static final Logger s_log = LoggerFactory.getLogger(DataPumpPusher.class);
 
 	private static final String s_ProtocolBufferExtension = ".pbData";
 
@@ -66,15 +66,10 @@ public class DataPumpPusher  {
 	@Async("DirectoryProcessor")
 	public  void processDirectory()  {
 
-
-
 		File dir = getCacheDir().toFile();
 		File [] filesToConsider = dir.listFiles(
 			pathname -> pathname.getName().endsWith(s_ProtocolBufferExtension)
 		);
-
-
-
 
 		// This should be fast, we just tee up the files to be pushed.
 		// If the queue overflows then we ignore the request. It should get picked up
@@ -83,12 +78,7 @@ public class DataPumpPusher  {
 			Arrays.stream(filesToConsider).map(File::toPath).forEach( (p)->{
 				d_asyncPusher.requestPathPush(p); // request the the path be processed
 				d_asyncPusher.push(); // request work to get done - sort of like a notify()
-			}
-			);
-
+			});
 		}
-
 	}
-
-
 }
