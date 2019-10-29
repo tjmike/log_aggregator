@@ -1,0 +1,15 @@
+#
+#
+# Simple script to monitor log files for problems. If all is working the logs are there and wc -l will report the same
+# value as the counter in the log. This script just makes it easy to perform that test.
+#
+for LOG in 1 2 3
+do
+	WC=$(wc -l ServerLog/log${LOG}.log.*[0-9] | awk '{print $1}')
+	LAST=$(tail -1 ServerLog/log${LOG}.log.*[0-9] | awk '{print $NF}')
+
+	DELTA=$(expr $WC - $LAST )
+	
+	echo "log${LOG}.log WC=${WC} LAST=${LAST} DELTA=${DELTA} "
+done  
+
