@@ -40,11 +40,6 @@ dependencies {
 
 }
 
-//application {
-//     Define the main class for the application
-//    mainClassName = "tjmike.datastax.agent.App"
-//}
-
 val test by tasks.getting(Test::class) {
     // Use junit platform for unit tests
     useJUnitPlatform()

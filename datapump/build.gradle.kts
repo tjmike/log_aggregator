@@ -40,6 +40,6 @@ dependencies {
 }
 
 application {
-    mainClassName = "tjmike.datastax.datapump.DataPump"
+    mainClassName = "tjmike.logaggregator.datapump.DataPump"
 }
 

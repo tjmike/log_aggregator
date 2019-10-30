@@ -31,19 +31,18 @@ dependencies {
     compile( project(":proto") )
 
     implementation("org.springframework.boot:spring-boot-starter")
-    implementation(files("../proto/build/libs/proto.jar"))
-
+    implementation(files("proto/build/libs/proto.jar"))
 
 }
 
 application {
-    mainClassName = "tjmike.datastax.agent.LogAgent"
+    mainClassName = "tjmike.logaggregator.agent.LogAgent"
 }
 
 
 configure<SourceSetContainer> {
     named("main") {
-        java.srcDir("build/generated/source/proto/main/java")
+        java.srcDir("proto/build/generated/source/proto/main/java")
     }
 }
 

@@ -1,6 +1,7 @@
 /*
- *
+ * 
  */
+
 buildscript {
   repositories {
     mavenCentral()
@@ -13,12 +14,10 @@ plugins {
     id("org.springframework.boot") version "2.2.0.RELEASE"
     application
 }
-
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 }
-
 repositories {
     jcenter()
 }
@@ -33,29 +32,23 @@ dependencies {
     compile("org.apache.camel:camel-core:3.0.0-RC2");
     compile("org.apache.camel:camel-spring-boot-starter:3.0.0-RC2");
     compile("org.apache.camel:camel-file-watch-starter:3.0.0-RC2");
-
+    compile( project(":proto") )
 
     implementation("org.springframework.boot:spring-boot-starter")
-    implementation(files("../proto/build/libs/proto.jar"))
+    implementation(files("proto/build/libs/proto.jar"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
+
 
 }
 
 application {
-    mainClassName = "tjmike.datastax.datadecoder.DataDecoder"
-}
-
-val test by tasks.getting(Test::class) {
-    // Use junit platform for unit tests
-    useJUnitPlatform()
+    mainClassName = "tjmike.logaggregator.datadecoder.DataDecoder"
 }
 
 
 configure<SourceSetContainer> {
     named("main") {
-        java.srcDir("build/generated/source/proto/main/java")
+        java.srcDir("proto/build/generated/source/proto/main/java")
     }
 }
 

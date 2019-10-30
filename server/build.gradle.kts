@@ -40,7 +40,7 @@ dependencies {
 
 
 application {
-    mainClassName = "tjmike.datastax.logServer.LogServer"
+    mainClassName = "tjmike.logaggregator.logServer.LogServer"
 }
 
 

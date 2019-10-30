@@ -1,5 +1,8 @@
 /*
-
+ *  Used to build the .java protobuf files
+ *  Requires protoc 
+ *  Remove src/main/java/tjmike/  
+ *  Replace the build script with this
  */
 // https://github.com/google/protobuf-gradle-plugin
 
@@ -17,7 +20,7 @@ plugins {
     // Apply the java plugin to add support for Java
     java
 
-    // id("com.google.protobuf") version "0.8.10"
+    id("com.google.protobuf") version "0.8.10"
 
 }
 
@@ -40,10 +43,6 @@ dependencies {
 
 }
 
-//application {
-//     Define the main class for the application
-//    mainClassName = "tjmike.datastax.agent.App"
-//}
 
 val test by tasks.getting(Test::class) {
     // Use junit platform for unit tests

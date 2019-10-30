@@ -7,4 +7,3 @@
  * in the user manual at https://docs.gradle.org/5.6.3/userguide/multi_project_builds.html
  */
 
-//  rootProject.name = "tjmike.datastax.agent"
