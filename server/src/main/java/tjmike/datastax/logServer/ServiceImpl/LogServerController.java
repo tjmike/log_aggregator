@@ -147,12 +147,13 @@ public class LogServerController {
 		synchronized (this) {
  			counter++;
 		}
-		int payloadSize = logPartRebuilt.getPayload().size();
-		String id = logPartRebuilt.getId();
-		long session = logPartRebuilt.getSession();
-		long seq = logPartRebuilt.getSeq();
 
 		if( s_log.isInfoEnabled() ) {
+			int payloadSize = logPartRebuilt.getPayload().size();
+			String id = logPartRebuilt.getId();
+			long session = logPartRebuilt.getSession();
+			long seq = logPartRebuilt.getSeq();
+			
 			String msg = String.format("Name: %s Session: %d Seq: %d Payload: %d", id, session, seq, payloadSize);
 			s_log.info(msg);
 		}
