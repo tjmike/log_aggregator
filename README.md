@@ -19,17 +19,31 @@ project was built and tested with JDK11. The web server uses port 8080.
       1) ```nohup ./src/test/logGen > LogSource/log1.log &```
       2) ```nohup ./src/test/logGen > LogSource/log2.log &```
       3) ```nohup ./src/test/logGen > LogSource/log3.log &```
-10) ```./src/test/logCheck```
+10) Sanity check the logs.
+
+    ```./src/test/logCheck```
     
-    This script can be used to monitor the logs. The LogGen script emits a counter for each line.
-    Here's an example of the first two lines:
+    This script can be used as a simple check for the logs. The LogGen script emits a counter for each line.
+    This script does a wc -l on the log file and also checks the last count. If they are the same then all 
+    is well. There's an outside chance that the file changes between the wc and tail. If there is a 
+    discrepancy and then it recovers we can assume all is well. The script won't behave will if multiple session are
+    present in the log file either.
+    
+    Here's an example output: 
+    ```
+    log1.log WC=3964 LAST=3964 DELTA=0 
+    log2.log WC=2492 LAST=2492 DELTA=0 
+    log3.log WC=1473 LAST=1473 DELTA=0 
+    ```
+    This is telling us that log 1 has 3964 lines and the last index read is also 3964. The DELTA is just the difference
+    between WC and LAST.
+    
+    Here's an example of the first two lines of the log file:
     ```
     Monday October 28, 2019 23:00:16.124950000 Hello, World! 1
     Monday October 28, 2019 23:00:16.133206000 Hello, World! 2
     ``` 
-    This script does a wc -l on the log file and also checks the last count. If they are the same then all 
-    is well. There's an outside chance that the file changes between the wc and tail. If there is a 
-    discrepancy and then it recovers we can assume all is well.   
+    
     
 11) Check the backpressure setting:
 
