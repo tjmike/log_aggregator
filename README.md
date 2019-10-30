@@ -26,8 +26,8 @@ project was built and tested with JDK11. The web server uses port 8080.
     This script can be used as a simple check for the logs. The LogGen script emits a counter for each line.
     This script does a wc -l on the log file and also checks the last count. If they are the same then all 
     is well. There's an outside chance that the file changes between the wc and tail. If there is a 
-    discrepancy and then it recovers we can assume all is well. The script won't behave will if multiple session are
-    present in the log file either.
+    discrepancy and then it recovers we can assume all is well. The script won't behave will if multiple sessions
+    are present in the log file either.
     
     Here's an example output: 
     ```
