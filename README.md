@@ -96,21 +96,16 @@ project was built and tested with JDK11. The web server uses port 8080.
     kill %1 %2 %3 %4
     '''
 
-## Multiple Clients
-The server supports multiple clients as long as the rules are followed. Each log file name must be unique. 
-Multiple agent instances may be run, sharing the same datapump, or multiple instance/datapump pair may be run.
-It should be possible to run the agent/datapump pair on multiple hosts too. 
-
     
 ## Solution Discussion
 
-## High Level Design
+### High Level Design
 ![High Level Operation Diagram](images/HighLevelOperation.png)
 
 
 Below is a discussion of each component. 
 
-## Subprojects:
+### Subprojects:
 
 ### agent
 - Tail and encode 
@@ -170,7 +165,11 @@ a name of the form NAME.SESSION where NAME is the original log file name and SES
 the agent session that captured the log. The order of log files with the same name can be determined from the
 SESSION but there's no way to know how much (if any) data was lost between sessions.
 
- 
+### Multiple Clients
+The server supports multiple clients as long as the rules are followed. Each log file name must be unique. 
+Multiple agent instances may be run, sharing the same datapump, or multiple instance/datapump pair may be run.
+It should be possible to run the agent/datapump pair on multiple hosts too. 
+
 
 ### proto
 Protocol Buffers are used as format for serializing log file chunks. The format is:
@@ -193,7 +192,7 @@ server makes no assumption about the nature of the log file, it just captures by
 - A log file has a globally unique name string (id). 
 
 - Every logging session for a particular log file has sessionID that's unique to that log file. 
-  The sessionID must increase for each logging agent session. The unix millis timestamp is a good
+  The sessionID must increase for each logging agent session. The UNIX millis timestamp is a good
   candidate for this id.
 
 - Every logging chunk must have a sequence that starts at one and increases by one for each chunk.
