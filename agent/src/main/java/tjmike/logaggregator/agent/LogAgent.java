@@ -4,12 +4,8 @@
 
 package tjmike.logaggregator.agent;
 
-import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,7 +80,7 @@ public class LogAgent implements CommandLineRunner {
 		boolean hadData = false;
 		for (LogTail logFile : d_pathProvider.getLogTailFiles() ) {
 			LogTailResult res = logFile.poll(data);
-			int nRead = res.getnRead();
+			int nRead = res.getNumberRead();
 			if (nRead > 0) {
 				hadData = true;
 				if (s_log.isDebugEnabled()) {
@@ -93,7 +89,7 @@ public class LogAgent implements CommandLineRunner {
 				d_dataPumper.process(res, data);
 			}
 			if (s_log.isInfoEnabled()) {
-				s_log.info(res.getId() + ": Status: " + res.getLastStatus() + " nRead: " + res.getnRead());
+				s_log.info(res.getId() + ": Status: " + res.getLastStatus() + " nRead: " + res.getNumberRead());
 			}
 		}
 

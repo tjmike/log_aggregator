@@ -133,7 +133,7 @@ class LogTail {
 
 
 				if( s_log.isInfoEnabled()) {
-					s_log.info(d_path.getFileName().toString() + ": lastestSize = " + latestSize
+					s_log.info(d_path.getFileName().toString() + ": latestSize = " + latestSize
 						+ " totalRead= " + d_totalRead);
 				}
 
@@ -210,16 +210,16 @@ class LogTail {
 		if( s_log.isDebugEnabled() ) {
 			s_log.debug("READ BEGIN : total read = " + d_totalRead);
 		}
-		int nread = d_inputStream.read(data);
-		if (nread > 0) {
-			d_totalRead += nread;
+		int nRead = d_inputStream.read(data);
+		if (nRead > 0) {
+			d_totalRead += nRead;
 
 			++d_sequence;
 		}
 		if( s_log.isDebugEnabled() ) {
 			s_log.debug("READ END : total read = " + d_totalRead);
 		}
-		return nread;
+		return nRead;
 	}
 
 //	public long getSequence() {
@@ -258,26 +258,23 @@ class LogTail {
 				// data will be lost if we restart in the middle of this
 				//
 				nRead = read(data);
-				s_log.info(d_path.getFileName().toString() + " : READ OLD FILE: nread=" + nRead );
-
+				s_log.info(d_path.getFileName().toString() + " : READ OLD FILE: nRead=" + nRead );
 				if( nRead < 0 ) {
 					setAttrs();
 					resetInputStream(false);
 					nRead = read(data);
-
-					s_log.info(d_path.getFileName().toString() + " : READ NEW FILE: nread=" + nRead );
-
+					s_log.info(d_path.getFileName().toString() + " : READ NEW FILE: nRead=" + nRead );
 				}
-				s_log.info(d_path.getFileName().toString() + " : MOVED FILE: nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : MOVED FILE: nRead=" + nRead );
 				break;
 			case DELETED:
 				nRead = 0;
-				s_log.info(d_path.getFileName().toString() + " : DELETED FILE: nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : DELETED FILE: nRead=" + nRead );
 				break;
 			case TRUNCATED:
 				resetInputStream(false);
 				nRead = read(data);
-				s_log.info(d_path.getFileName().toString() + " : TRUNCATED FILE: nread=" + nRead );
+				s_log.info(d_path.getFileName().toString() + " : TRUNCATED FILE: nRead=" + nRead );
 				break;
 			default:
 				s_log.error("Error unexpected status: " + status.name());

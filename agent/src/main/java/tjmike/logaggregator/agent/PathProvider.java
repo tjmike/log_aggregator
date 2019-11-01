@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
 @Component("PathProvider")
 public class PathProvider {
 
-	private List<String> d_logFiles;
+	private final List<String> d_logFiles;
 	private List<LogTail> d_logTailFiles;
 
 
 
-	private String d_logCacheDirName;
+	private final String d_logCacheDirName;
 	private Path d_logCacheDir;
 
 	public PathProvider(
@@ -51,10 +51,7 @@ public class PathProvider {
 			(f) -> new LogTail(Paths.get(f).normalize(), d_SessionID)
 		).collect(Collectors.toList());
 
-
-
 		Path logCacheDir = Paths.get(d_logCacheDirName).toAbsolutePath();
-
 
 		// Try to make the dirs
 		if (!Files.exists(logCacheDir)) {
@@ -68,8 +65,6 @@ public class PathProvider {
 		} else {
 			d_logCacheDir = logCacheDir;
 		}
-
-
 	}
 
 	List<LogTail> getLogTailFiles() {

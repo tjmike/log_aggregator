@@ -42,7 +42,7 @@ public class LogTailResult {
 		d_timestamp = System.currentTimeMillis();
 	}
 
-	public int getnRead() {
+	public int getNumberRead() {
 		return d_nRead;
 	}
 

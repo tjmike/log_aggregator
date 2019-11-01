@@ -20,7 +20,7 @@ public class DataPumpPusher  {
 
 	// Directory for the agent log cache as a string
 
-		private String d_logCacheDirName;
+	private final String d_logCacheDirName;
 
 	// Directory for the agent log cache as a path - created from string
 	private Path d_logCacheDir;
@@ -40,10 +40,6 @@ public class DataPumpPusher  {
 		d_asyncPusher = asyncPusher;
 	}
 
-
-
-
-
 	// Lazy creation of the path - it's not set in the constructor
 	private Path getCacheDir() {
 		// We need the full path if the passed in one os relative
@@ -52,15 +48,11 @@ public class DataPumpPusher  {
 			if( s_log.isInfoEnabled()) {
 				s_log.info(String.format("Log Cache Dir = %s", d_logCacheDir ));
 			}
-
 		}
-
 		return d_logCacheDir;
 	}
 
-
-
-	// Process the directory. This is fairly fast operation because the push command is asnyc
+	// Process the directory. This is fairly fast operation because the push command is async
 	// We get an event from the cache watcher and marshall it onto the
 	// the single DirectoryProcessor thread. We don't need to list directories
 	// in parallel. If we get multiple requests while processing this we need

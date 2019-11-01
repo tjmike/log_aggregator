@@ -31,13 +31,9 @@ public class AsyncPusher implements AsyncPusherIF {
 
 	private static final Logger s_log = LoggerFactory.getLogger(AsyncPusher.class);
 
-
-	private String d_webServerPath;
-
+	private final String d_webServerPath;
 
 	private long d_sleepUntil = 0;
-
-
 
 	public AsyncPusher(
 		@Value("${datapump.server.path}") String webServerPath
@@ -95,7 +91,6 @@ public class AsyncPusher implements AsyncPusherIF {
 
 			uploadPath(pathToWorkOn);
 
-
 			// sleep if needed or get the next work item
 			// don't sleep while holding a Path to work on.
 			long sleepMillis = sleepMillis();
@@ -150,7 +145,6 @@ public class AsyncPusher implements AsyncPusherIF {
 						}
 					}
 
-
 					s_log.info(
 						String.format("PUSH: %s Code: %d Message: %s", pathToWorkOn.getFileName(), code, msg)
 					);
@@ -162,12 +156,10 @@ public class AsyncPusher implements AsyncPusherIF {
 						success = true;
 					}
 
-
 				} else {
 					// if the file doesn't exist then we treat as success
 					success = true;
 					s_log.warn(String.format("PUSH: SKIP NONEXISTENT FILE: %s", pathToWorkOn.getFileName().toString()));
-
 				}
 			}
 		} catch (Throwable ex) {
@@ -181,6 +173,4 @@ public class AsyncPusher implements AsyncPusherIF {
 			}
 		}
 	}
-
-
 }

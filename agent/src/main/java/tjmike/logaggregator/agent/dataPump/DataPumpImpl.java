@@ -74,8 +74,7 @@ public class DataPumpImpl implements DataPumpInterface {
 		lp.setId(res.getId());
 		lp.setSeq(res.getSeqNum());
 		lp.setSession(res.getSessionID());
-
-		lp.setPayload( ByteString.copyFrom(buff,0,res.getnRead()));
+		lp.setPayload( ByteString.copyFrom(buff,0,res.getNumberRead()));
 		return lp.build();
 	}
 
