@@ -20,6 +20,14 @@ class PathForLogChunkWorkList {
 	// The set of paths that we are working on
 	private final HashSet<Path> d_processingSet = new HashSet<>();
 
+	synchronized  int getWorkListSize() {
+		return d_workList.size();
+	}
+
+	synchronized  int checkWorkListVsSetSync() {
+		return d_workList.size() - d_workListSet.size();
+	}
+
 
 	/**
 	 * Add a path to the work queue. If the path is already in the work list or being processed
@@ -69,4 +77,7 @@ class PathForLogChunkWorkList {
 		}
 	}
 
+	int getMaxPaths() {
+		return s_maxPaths;
+	}
 }

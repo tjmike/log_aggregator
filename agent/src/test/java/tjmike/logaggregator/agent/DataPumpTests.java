@@ -1,6 +1,5 @@
 package tjmike.logaggregator.agent;
 
-import com.google.protobuf.ByteString;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;

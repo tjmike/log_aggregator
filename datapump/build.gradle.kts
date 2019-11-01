@@ -1,6 +1,8 @@
 /*
  *
  */
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+// import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 buildscript {
   repositories {
@@ -37,7 +39,25 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation(files("../proto/build/libs/proto.jar"))
 
+    testCompile("org.springframework.boot:spring-boot-starter-test:2.2.0.RELEASE")
+    testCompile("org.mock-server:mockserver-netty:5.6.1");
+    testImplementation("ch.qos.logback:logback-classic:1.1.7") {
+      isForce = true
+    }
+    testImplementation("ch.qos.logback:logback-core:1.1.7") {
+      isForce = true
+    }
+//    testCompile("ch.qos.logback:logback-classic:1.2.3");
 }
+
+tasks {
+    test {
+        testLogging.showExceptions = true
+        testLogging.displayGranularity  = 0
+        testLogging.events(TestLogEvent.FAILED, TestLogEvent.PASSED, TestLogEvent.SKIPPED) // , TestLogEvent.STARTED)
+    }
+}
+
 
 application {
     mainClassName = "tjmike.logaggregator.datapump.DataPump"

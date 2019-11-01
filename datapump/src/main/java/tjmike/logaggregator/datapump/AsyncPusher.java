@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
  * This class is responsible for accepting request to push files to a a server using http.
  */
 @Service
-public class AsyncPusher {
+public class AsyncPusher implements AsyncPusherIF {
 
 	/**
 	 * An order list of work items.
@@ -31,7 +31,7 @@ public class AsyncPusher {
 
 	private static final Logger s_log = LoggerFactory.getLogger(AsyncPusher.class);
 
-	@Value("${datapump.server.path}")
+
 	private String d_webServerPath;
 
 
@@ -39,7 +39,10 @@ public class AsyncPusher {
 
 
 
-	public AsyncPusher() {
+	public AsyncPusher(
+		@Value("${datapump.server.path}") String webServerPath
+	) {
+		d_webServerPath =webServerPath;
 		d_httpClient = HttpClient.newBuilder()
 			            .version(HttpClient.Version.HTTP_2)
 			            .build();
@@ -49,7 +52,7 @@ public class AsyncPusher {
 		d_sleepUntil = System.currentTimeMillis() + (seconds * 1000);
 	}
 
-	private synchronized long sleepMillis( ) {
+	synchronized long sleepMillis( ) {
 		long ret = d_sleepUntil - System.currentTimeMillis();
 		ret = Math.max(0,ret);
 		return ret;
@@ -71,7 +74,7 @@ public class AsyncPusher {
 	 *
 	 * @param pathToPush
 	 */
-	void requestPathPush(Path pathToPush) {
+	public void requestPathPush(Path pathToPush) {
 		d_workQueue.addPath(pathToPush);
 	}
 
@@ -85,72 +88,12 @@ public class AsyncPusher {
 	 * @return true
 	 */
 	@Async("DPumpPusher")
-	Future<Boolean> push()  {
+	public Future<Boolean> push()  {
 
-		Path pathToWorkOn = d_workQueue.beginWork();
+		Path pathToWorkOn = beginWork();
 		while( pathToWorkOn != null ) {
 
-			boolean success = false;
-			try {
-				{
-					if( Files.exists(pathToWorkOn)) {
-
-						// This was suspected of leaving file descriptors open but it seems to be ok
-						HttpRequest request = HttpRequest.newBuilder()
-							.POST(HttpRequest.BodyPublishers.ofFile(pathToWorkOn))
-							.uri(URI.create(d_webServerPath))
-							.setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
-							.header("Content-Type", "application/application/octet-stream")
-							.build();
-						HttpResponse<String> response = d_httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-						// TODO check return code for errors
-
-						int code = response.statusCode();
-						String msg = response.body();
-
-						// Check the message for a delay
-						String key = "Throttle: ";
-						if( msg.indexOf(key) == 0 ) {
-							String amt = msg.substring(key.length()).trim();
-							try {
-								int seconds = Integer.parseInt(amt);
-								throttle(seconds);
-							} catch(NumberFormatException ex) {
-								s_log.warn("Error parsing throttle message: " + msg);
-							}
-						}
-
-
-						s_log.info(
-							String.format("PUSH: %s Code: %d Message: %s", pathToWorkOn.getFileName(), code, msg)
-						);
-
-						// only delete the file and send success if we got an OK code from the server
-						if( code  == HttpURLConnection.HTTP_OK) {
-							// If there were no errors then delete the the file
-							Files.delete(pathToWorkOn);
-							success = true;
-						}
-
-
-					} else {
-						// if the file doesn't exist then we treat as success
-						success = true;
-						s_log.warn(String.format("PUSH: SKIP NONEXISTENT FILE: %s", pathToWorkOn.getFileName().toString()));
-
-					}
-				}
-			} catch (Throwable ex) {
-//					 if something fails then we will not delete the file and it will be retried
-				s_log.error(ex.getMessage(), ex);
-			} finally {
-				if( success ) {
-					d_workQueue.endWork(pathToWorkOn);
-				} else {
-					d_workQueue.handlePathFailed(pathToWorkOn);
-				}
-			}
+			uploadPath(pathToWorkOn);
 
 
 			// sleep if needed or get the next work item
@@ -170,6 +113,73 @@ public class AsyncPusher {
 
 		// This value is not checked.
 		return new AsyncResult<>(true);
+	}
+
+	Path beginWork() {
+		return d_workQueue.beginWork();
+	}
+	 void uploadPath(Path pathToWorkOn) {
+		boolean success = false;
+		try {
+			{
+				if( Files.exists(pathToWorkOn)) {
+
+					// This was suspected of leaving file descriptors open but it seems to be ok
+					HttpRequest request = HttpRequest.newBuilder()
+						.POST(HttpRequest.BodyPublishers.ofFile(pathToWorkOn))
+						.uri(URI.create(d_webServerPath))
+						.setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
+						.header("Content-Type", "application/application/octet-stream")
+						.build();
+					HttpResponse<String> response = d_httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+					// TODO check return code for errors
+
+					int code = response.statusCode();
+					String msg = response.body();
+
+					// Check the message for a delay
+					String key = "Throttle: ";
+					if( msg.indexOf(key) == 0 ) {
+						String amt = msg.substring(key.length()).trim();
+						try {
+							int seconds = Integer.parseInt(amt);
+							throttle(seconds);
+						} catch(NumberFormatException ex) {
+							s_log.warn("Error parsing throttle message: " + msg);
+						}
+					}
+
+
+					s_log.info(
+						String.format("PUSH: %s Code: %d Message: %s", pathToWorkOn.getFileName(), code, msg)
+					);
+
+					// only delete the file and send success if we got an OK code from the server
+					if( code  == HttpURLConnection.HTTP_OK) {
+						// If there were no errors then delete the the file
+						Files.delete(pathToWorkOn);
+						success = true;
+					}
+
+
+				} else {
+					// if the file doesn't exist then we treat as success
+					success = true;
+					s_log.warn(String.format("PUSH: SKIP NONEXISTENT FILE: %s", pathToWorkOn.getFileName().toString()));
+
+				}
+			}
+		} catch (Throwable ex) {
+//					 if something fails then we will not delete the file and it will be retried
+			s_log.error(ex.getMessage(), ex);
+		} finally {
+			if( success ) {
+				d_workQueue.endWork(pathToWorkOn);
+			} else {
+				d_workQueue.handlePathFailed(pathToWorkOn);
+			}
+		}
 	}
 
 

@@ -1,6 +1,8 @@
 /*
  * 
  */
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+//import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 buildscript {
   repositories {
@@ -36,6 +38,14 @@ dependencies {
     testCompile("org.springframework.boot:spring-boot-starter-test:2.2.0.RELEASE")
 
 }
+tasks {
+    test {
+        testLogging.showExceptions = true
+        testLogging.displayGranularity  = 0
+        testLogging.events(TestLogEvent.FAILED, TestLogEvent.PASSED, TestLogEvent.SKIPPED) // , TestLogEvent.STARTED)
+    }
+}
+
 
 application {
     mainClassName = "tjmike.logaggregator.agent.LogAgent"

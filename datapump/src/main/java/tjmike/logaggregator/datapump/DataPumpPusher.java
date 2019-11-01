@@ -19,21 +19,24 @@ public class DataPumpPusher  {
 
 
 	// Directory for the agent log cache as a string
-	@Value("${Agent.LogCacheDir}")
+
 		private String d_logCacheDirName;
 
 	// Directory for the agent log cache as a path - created from string
 	private Path d_logCacheDir;
 
-	private final AsyncPusher d_asyncPusher;
+	private final AsyncPusherIF d_asyncPusher;
 
 	private static final Logger s_log = LoggerFactory.getLogger(DataPumpPusher.class);
 
-	private static final String s_ProtocolBufferExtension = ".pbData";
+	static final String s_ProtocolBufferExtension = ".pbData";
 
 
 	@Autowired
-	public DataPumpPusher(AsyncPusher asyncPusher) {
+	public DataPumpPusher(
+		@Value("${Agent.LogCacheDir}") String logCacheDirName,
+		AsyncPusherIF asyncPusher) {
+		d_logCacheDirName = logCacheDirName;
 		d_asyncPusher = asyncPusher;
 	}
 
