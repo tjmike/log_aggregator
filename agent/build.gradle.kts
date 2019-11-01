@@ -33,6 +33,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation(files("proto/build/libs/proto.jar"))
 
+    testCompile("org.springframework.boot:spring-boot-starter-test:2.2.0.RELEASE")
+
 }
 
 application {

@@ -18,7 +18,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
-import tjmike.logaggregator.agent.dataPump.DataPumper;
+import tjmike.logaggregator.agent.dataPump.DataPumpInterface;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 @EnableAsync
 public class LogAgent implements CommandLineRunner {
 	private static final Logger s_log = LoggerFactory.getLogger(LogAgent.class);
-	private static final long s_SessionID = Instant.now().getEpochSecond();
 	private static final int s_buffSize = 65536;
 	private static final long s_noActivitySleepMillis = 5000L;
 
@@ -37,12 +36,13 @@ public class LogAgent implements CommandLineRunner {
     @Value("#{'${Agent.LogsToMonitor}'.split(',')}")
 	private List<String> d_logFiles;
 
-    private  final DataPumper d_dataPumper;
-
+    private  final DataPumpInterface d_dataPumper;
+	private final PathProvider d_pathProvider;
 
     @Autowired
-    public LogAgent(DataPumper dataPumper) {
-        this.d_dataPumper = dataPumper;
+    public LogAgent(PathProvider pathProvider, DataPumpInterface dataPumper) {
+        this.d_pathProvider = pathProvider;
+    	this.d_dataPumper = dataPumper;
     }
 
     public static void main(String[] args) {
@@ -55,26 +55,17 @@ public class LogAgent implements CommandLineRunner {
     }
 
     public  void run(String... args) throws IOException, InterruptedException {
-
-        d_logFiles.forEach((f)->s_log.info("Monitoring:'" +f + "'"));
-
-        List<LogTail> logTailFiles = d_logFiles.stream().map(
-            (f) -> new LogTail(new File(f).toPath(), s_SessionID)
-        ).collect(Collectors.toList());
-
-        pollLogsForever(logTailFiles, d_dataPumper);
+        pollLogsForever();
     }
 
 
 	/**
 	 * In a loop tail the supplied log files forever and hand off data to the supplied DataPumper.
 	 * If there is no log activity, sleep to prevent the thread from using excessive resources.
-	 * @param logFilesToTail
-	 * @param pumper
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	private static void pollLogsForever(Collection<LogTail> logFilesToTail, final DataPumper pumper)  throws InterruptedException, IOException{
+	private void pollLogsForever()  throws InterruptedException, IOException{
 		// supply a byte buffer for data
 		// this buffer is shared for all requests
 		// We assume the
@@ -83,35 +74,40 @@ public class LogAgent implements CommandLineRunner {
   		boolean running = true;
         while( running) {
 
-			boolean hadData = false;
-			for (LogTail logFile : logFilesToTail) {
-				LogTailResult res = logFile.poll(data);
-				int nRead = res.getnRead();
-				if (nRead > 0) {
-					hadData = true;
-					if (s_log.isDebugEnabled()) {
-						s_log.debug("NRead = " + nRead);
-					}
-					pumper.process(res, data);
-				}
-				if (s_log.isInfoEnabled()) {
-					s_log.info(res.getId() + ": Status: " + res.getLastStatus() + " nRead: " + res.getnRead());
-				}
-			}
+			running = pollLogs(data, running);
 
-				// We don't want to spin too fast looking for data if our logs don't have anything for us
-				// then sleep for a while before trying again. The idea is that if the logs are really active
-				// we will never enter this sleep mode.
-				if (!hadData) {
-					Thread.sleep(s_noActivitySleepMillis);
-				}
-				if( Thread.interrupted() )  {
-					s_log.warn("Thread interrupted, will stop processing");
-					running  = false;
-				}
-
-        }
+		}
 
     }
+
+    boolean pollLogs(byte[] data, boolean running) throws IOException, InterruptedException {
+		boolean hadData = false;
+		for (LogTail logFile : d_pathProvider.getLogTailFiles() ) {
+			LogTailResult res = logFile.poll(data);
+			int nRead = res.getnRead();
+			if (nRead > 0) {
+				hadData = true;
+				if (s_log.isDebugEnabled()) {
+					s_log.debug("NRead = " + nRead);
+				}
+				d_dataPumper.process(res, data);
+			}
+			if (s_log.isInfoEnabled()) {
+				s_log.info(res.getId() + ": Status: " + res.getLastStatus() + " nRead: " + res.getnRead());
+			}
+		}
+
+		// We don't want to spin too fast looking for data if our logs don't have anything for us
+		// then sleep for a while before trying again. The idea is that if the logs are really active
+		// we will never enter this sleep mode.
+		if (!hadData) {
+			Thread.sleep(s_noActivitySleepMillis);
+		}
+		if( Thread.interrupted() )  {
+			s_log.warn("Thread interrupted, will stop processing");
+			running  = false;
+		}
+		return running;
+	}
 
 }

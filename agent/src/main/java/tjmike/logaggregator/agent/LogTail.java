@@ -83,12 +83,16 @@ class LogTail {
 	LogTail(Path path, long sessionID)  {
 		d_path = path;
 		d_sessionID = sessionID;
-		if( Files.exists(d_path)) {
-			try {
-				d_attrs = Files.readAttributes(d_path, BasicFileAttributes.class);
-				resetInputStream(true);
-			} catch(Exception ex ) {
-				s_log.error(ex.getMessage(),ex);
+		if( Files.exists(d_path) ) {
+			if (Files.isReadable(d_path)) {
+				try {
+					d_attrs = Files.readAttributes(d_path, BasicFileAttributes.class);
+					resetInputStream(true);
+				} catch (Exception ex) {
+					s_log.error(ex.getMessage(), ex);
+				}
+			} else {
+				s_log.error("File exists but is not readable: " + d_path.toString());
 			}
 		}
 	}

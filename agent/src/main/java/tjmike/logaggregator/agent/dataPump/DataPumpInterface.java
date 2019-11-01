@@ -4,7 +4,7 @@ import tjmike.logaggregator.agent.LogTailResult;
 
 import java.io.IOException;
 
-public interface DataPumper {
+public interface DataPumpInterface {
 	/**
 	 * Process the log tail result. A successful return means the result has been
 	 * persisted and queued up to be passed to a remote server. The caller can assume
