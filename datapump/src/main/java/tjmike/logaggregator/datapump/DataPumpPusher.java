@@ -1,8 +1,13 @@
 package tjmike.logaggregator.datapump;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +40,8 @@ public class DataPumpPusher  {
 	@Autowired
 	public DataPumpPusher(
 		@Value("${Agent.LogCacheDir}") String logCacheDirName,
-		AsyncPusherIF asyncPusher) {
+		AsyncPusherIF asyncPusher
+	) {
 		d_logCacheDirName = logCacheDirName;
 		d_asyncPusher = asyncPusher;
 	}
@@ -57,23 +63,42 @@ public class DataPumpPusher  {
 	// the single DirectoryProcessor thread. We don't need to list directories
 	// in parallel. If we get multiple requests while processing this we need
 	// only execute the process one more time. A queue of two allows for this.
+
 	@SuppressWarnings("unused") // this will get called via Spring
 	@Async("DirectoryProcessor")
 	public  void processDirectory()  {
 
-		File dir = getCacheDir().toFile();
-		File [] filesToConsider = dir.listFiles(
-			pathname -> pathname.getName().endsWith(s_ProtocolBufferExtension)
-		);
+		// Get get a list of paths that all have attributes
+		List<PathWithAttributes> paths;
+		try {
+			paths = Files.list(getCacheDir())
+				.filter((p) -> p.getFileName().toString().endsWith(s_ProtocolBufferExtension))
+				.map(PathWithAttributes::new)
+				.filter((p)->p.getAttributes() != null)
+				.collect(Collectors.toList()
+			);
+		} catch (IOException ex) {
+			s_log.error(ex.getMessage(), ex);
+			paths = new ArrayList<>(0);
+		}
+
+		// sort the paths by last modified
+		paths.sort((o1, o2) -> {
+			FileTime ft1 = o1.getAttributes().lastModifiedTime();
+			FileTime ft2 = o2.getAttributes().lastModifiedTime();
+			return ft1.compareTo(ft2);
+		});
+
 
 		// This should be fast, we just tee up the files to be pushed.
 		// If the queue overflows then we ignore the request. It should get picked up
 		// on another pass
-		if( filesToConsider != null ) {
-			Arrays.stream(filesToConsider).map(File::toPath).forEach( (p)->{
-				d_asyncPusher.requestPathPush(p); // request the the path be processed
-				d_asyncPusher.push(); // request work to get done - sort of like a notify()
-			});
+		{
+			int szBefore = paths.size();
+			paths.forEach(
+				d_asyncPusher::uploadPath
+		);
 		}
 	}
+
 }

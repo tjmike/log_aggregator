@@ -168,7 +168,7 @@ public class DataPumpDecoderSort {
 				appendChunkToLog(fName);
 
 			} else {
-				s_log.warn(String.format("Missing sequence have %d and %d", lastProcessedSeq, seq) );
+				s_log.warn(String.format("Missing sequence for %s have %d and %d", logFileName, lastProcessedSeq, seq) );
 
 			}
 

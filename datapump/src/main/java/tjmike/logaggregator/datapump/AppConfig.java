@@ -11,20 +11,11 @@ public class AppConfig {
 
 
 	private static class ThreadPool1 {
+
 		// thread pool for pushing data via http
 		@Bean(name = "DPumpPusher")
 		public Executor taskExecutor() {
-			ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-			executor.setCorePoolSize(5);
-			executor.setMaxPoolSize(5);
-			executor.setQueueCapacity(0); // we don't want a queue - threads will poll a queue
-			executor.setThreadNamePrefix("DPumpPusher-");
-			executor.initialize();
-			executor.setRejectedExecutionHandler((r, executor1) -> {
-				// do nothing - if the pool is overrun the file will not be processed
-				// and it will get another shot
-			});
-			return executor;
+			return new DataPushExecutor();
 		}
 
 	}

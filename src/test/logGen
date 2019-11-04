@@ -3,6 +3,6 @@ while [ true ]
 do
 	now=$(gdate +"%A %B %d, %Y %H:%M:%S.%N")
 	echo "${now} Hello, World! ${PASS}"
-	# sleep 0.25
+	# sleep 5.25
 	PASS=$(expr $PASS + 1)
 done
