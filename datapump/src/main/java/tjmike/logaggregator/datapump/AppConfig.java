@@ -10,15 +10,15 @@ import java.util.concurrent.Executor;
 public class AppConfig {
 
 
-	private static class ThreadPool1 {
-
-		// thread pool for pushing data via http
-		@Bean(name = "DPumpPusher")
-		public Executor taskExecutor() {
-			return new DataPushExecutor();
-		}
-
-	}
+//	private static class ThreadPool1 {
+//
+//		// thread pool for pushing data via http
+//		@Bean(name = "DPumpPusher")
+//		public Executor taskExecutor() {
+//			return new DataPushExecutor();
+//		}
+//
+//	}
 
 	private static class ThreadPool2 {
 		// thread for directory processing

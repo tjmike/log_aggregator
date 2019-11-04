@@ -86,6 +86,14 @@ public class AsyncPusher implements AsyncPusherIF {
 
 			{
 				if( Files.exists(pathToWorkOn.getPath())) {
+					long sleep = sleepMillis();
+					if( sleep > 0 ) {
+						try {
+							Thread.sleep(sleep);
+						} catch (InterruptedException ex) {
+							s_log.error(ex.getMessage(), ex);
+						}
+					}
 					// This was suspected of leaving file descriptors open but it seems to be ok
 					HttpRequest request = HttpRequest.newBuilder()
 						.POST(HttpRequest.BodyPublishers.ofFile(pathToWorkOn.getPath()))

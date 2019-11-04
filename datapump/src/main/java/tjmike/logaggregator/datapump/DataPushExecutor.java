@@ -2,6 +2,7 @@ package tjmike.logaggregator.datapump;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
@@ -10,7 +11,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-
+@Service("DPumpPusher")
 class DataPushExecutor implements Executor {
 
 	private final int d_maxSize = 16;
