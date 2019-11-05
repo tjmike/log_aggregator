@@ -7,16 +7,16 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import tjmike.logaggregator.proto.LoggerProtos;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Service that accepts requests to process a directory.
@@ -110,17 +110,22 @@ public class DataPumpDecoderSort {
 	@SuppressWarnings("unused") // this will get called via Camelrouting
 	public void processDirectory()  {
 
-		File[] filesToConsider = getPBDataFiles();
-
-		if( filesToConsider != null ) {
-
-			List<PBLogFile> pbLogFiles = Arrays.stream(filesToConsider)
-				.map((f) -> new PBLogFile(f.toPath()))
-				.sorted(new PBLogFileComparator())
-				.collect(Collectors.toList())
+		List<PBLogFile> filesToConsider=null;
+		try {
+			try (Stream<Path> candidates = Files.list(d_pathProvider.getLogCacheDir())) {
+				filesToConsider = candidates.filter((p) -> p.getFileName().toString().endsWith(d_pathProvider.getPBDataExtension()))
+					.map(PBLogFile::new)
+					.sorted(new PBLogFileComparator())
+					.collect(Collectors.toList())
 				;
-
-			processCandidates(pbLogFiles);
+			} catch (IOException ex) {
+				s_log.error(ex.getMessage(), ex);
+			}
+		} catch( UncheckedIOException ex ) {
+			s_log.error(ex.getMessage(), ex);
+		}
+		if( filesToConsider != null ) {
+			processCandidates(filesToConsider);
 
 		}
 	}
@@ -173,18 +178,6 @@ public class DataPumpDecoderSort {
 			}
 
 		}
-	}
-
-	/**
-	 *
-	 * @return all the pbData files in the cache dir waiting to be processed
-	 */
-	private File[] getPBDataFiles() {
-		// get a filtered list of all files in the directory files
-		File dir = d_pathProvider.getLogCacheDir().toFile();
-		return dir.listFiles(
-			pathname -> pathname.getName().endsWith(d_pathProvider.getPBDataExtension())
-		);
 	}
 
 }
