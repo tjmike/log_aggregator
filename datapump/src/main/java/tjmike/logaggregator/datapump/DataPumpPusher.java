@@ -2,12 +2,14 @@ package tjmike.logaggregator.datapump;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,18 +70,26 @@ public class DataPumpPusher  {
 	@Async("DirectoryProcessor")
 	public  void processDirectory()  {
 
+
 		// Get get a list of paths that all have attributes
 		List<PathWithAttributes> paths;
 		try {
-			paths = Files.list(getCacheDir())
-				.filter((p) -> p.getFileName().toString().endsWith(s_ProtocolBufferExtension))
-				.map(PathWithAttributes::new)
-				.filter((p)->p.getAttributes() != null)
-				.collect(Collectors.toList()
-			);
-		} catch (IOException ex) {
-			s_log.error(ex.getMessage(), ex);
+			try (Stream<Path> ps = Files.list(getCacheDir())) {
+				paths = ps
+					.filter((p) -> p.getFileName().toString().endsWith(s_ProtocolBufferExtension))
+					.map(PathWithAttributes::new)
+					.filter((p) -> p.getAttributes() != null)
+					.collect(Collectors.toList()
+					);
+
+			} catch (IOException ex) {
+				s_log.error(ex.getMessage(), ex);
+				paths = new ArrayList<>(0);
+			}
+		} catch(UncheckedIOException ex ) {
 			paths = new ArrayList<>(0);
+			s_log.error(ex.getMessage(), ex);
+
 		}
 
 		// sort the paths by last modified
