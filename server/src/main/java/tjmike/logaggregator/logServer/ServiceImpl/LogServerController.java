@@ -30,11 +30,10 @@ import java.nio.file.StandardCopyOption;
 @RestController("tjmike.datastax.logServer.LogServerController")
 public class LogServerController {
 	private static final Logger s_log = LoggerFactory.getLogger(LogServerController.class);
-	private static final String s_AliveMessage = "Log Server Is Alive";
+	static final String s_AliveMessage = "Log Server Is Alive";
 	// some metrics for this instance
 	private int counter = 0;
 
-	@Value("${Server.LogCacheDir}")
 	private String d_cacheDirectoryString;
 	private Path d_cachePath;
 	private boolean d_shutItDown = false;
@@ -46,34 +45,39 @@ public class LogServerController {
 	private int d_throttle = 0;
 
 
- @PostConstruct
- private void initCachePath() {
- 	try {
-	 	File cacheFile = new File(d_cacheDirectoryString).getCanonicalFile();
+	public LogServerController(
+		@Value("${Server.LogCacheDir}") String cacheDirectoryString) {
+		d_cacheDirectoryString = cacheDirectoryString;
+	}
 
-		if(!cacheFile.exists() ) {
-			boolean created = cacheFile.mkdirs();
-			if( !created ) {
+	@PostConstruct
+  	void initCachePath() {
+		try {
+			File cacheFile = new File(d_cacheDirectoryString).getCanonicalFile();
+
+			if(!cacheFile.exists() ) {
+				boolean created = cacheFile.mkdirs();
+				if( !created ) {
+					s_log.error(
+						String.format("cache file doesn't exist and could not be created. %s",cacheFile.getCanonicalPath())
+					);
+					d_shutItDown = true;
+				}
+			}
+
+			if( !cacheFile.isDirectory()  ) {
 				s_log.error(
-					String.format("cache file doesn't exist and could not be created. %s",cacheFile.getCanonicalPath())
+					String.format("cache file exists but is not a directory. %s",cacheFile.getCanonicalPath())
 				);
 				d_shutItDown = true;
 			}
-		}
 
-		if( !cacheFile.isDirectory()  ) {
-			s_log.error(
-				String.format("cache file exists but is not a directory. %s",cacheFile.getCanonicalPath())
-			);
+			d_cachePath = cacheFile.toPath();
+
+		} catch (Exception ex) {
+			s_log.error(ex.getMessage(), ex);
 			d_shutItDown = true;
 		}
-
-		d_cachePath = cacheFile.toPath();
-
-	} catch (Exception ex) {
- 		s_log.error(ex.getMessage(), ex);
-		d_shutItDown = true;
-	}
  }
 
 
@@ -108,14 +112,9 @@ public class LogServerController {
 
 
 	private void save(LoggerProtos.LogPart lp ) throws IOException  {
- 		String id = lp.getId();
- 		long seqNum = lp.getSeq();
- 		long session = lp.getSession();
+		String fileName = generateFileName(lp);
 
-
- 		String fileName = String.format("%s_%s_%s.pbData", id,session, seqNum);
-
- 		File tmpFile = new File(d_cachePath.toFile(),fileName + ".tmp");
+		File tmpFile = new File(d_cachePath.toFile(),fileName + ".tmp");
  		File outFile = new File(d_cachePath.toFile(),fileName );
 
 
@@ -126,6 +125,15 @@ public class LogServerController {
 
 		// perform atomic move
 		Files.move(tmpFile.toPath(), outFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+	}
+
+	String generateFileName(LoggerProtos.LogPart lp) {
+		String id = lp.getId();
+		long seqNum = lp.getSeq();
+		long session = lp.getSession();
+
+
+		return String.format("%s_%s_%s.pbData", id,session, seqNum);
 	}
 
 	/**
