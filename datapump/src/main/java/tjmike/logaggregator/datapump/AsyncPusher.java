@@ -89,6 +89,7 @@ public class AsyncPusher implements AsyncPusherIF {
 					long sleep = sleepMillis();
 					if( sleep > 0 ) {
 						try {
+							s_log.info(String.format("Throttled: sleeping for %d millis", sleep));
 							Thread.sleep(sleep);
 						} catch (InterruptedException ex) {
 							s_log.error(ex.getMessage(), ex);
