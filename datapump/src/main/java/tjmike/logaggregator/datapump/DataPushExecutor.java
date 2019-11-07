@@ -2,6 +2,7 @@ package tjmike.logaggregator.datapump;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.TreeSet;
@@ -35,8 +36,10 @@ class DataPushExecutor implements Executor {
 
 	public DataPushExecutor() {
 
+		CustomizableThreadFactory threadFactory = new CustomizableThreadFactory("DPumpPusher-");
 		d_threadPoolExecutor= new ThreadPoolExecutor(
-			d_coreThreadSize, d_maxThreadsSize,1, TimeUnit.MINUTES,d_queue,
+			d_coreThreadSize, d_maxThreadsSize,1, TimeUnit.MINUTES,d_queue,threadFactory,
+
 			((r, executor) -> {
 				// ignore it
 			})
