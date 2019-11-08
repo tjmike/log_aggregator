@@ -64,19 +64,25 @@ public class DataPumpDecoderSort {
 		) {
 			// decode  the log part and append the data to the reconstructed log file
 			LoggerProtos.LogPart lp = LoggerProtos.LogPart.parseFrom(is);
+
+			// TODO consider some form of transaction for append/delete/track
+			// Ideally these three items would be part of some transaction
+			// 1) Append the log
 			os.write(lp.getPayload().toByteArray());
 			os.flush();
 			if( s_log.isInfoEnabled() ) {
 				s_log.info("Append: " + src.toString() + " --> " + target.toString());
 			}
-			// delete the buffer
+
+			// 2) delete the buffer
 			if( s_log.isDebugEnabled() ) {
 				s_log.warn("DELETE: " + src.toString());
 			}
 			Files.delete(src);
 
-			// track what we've processed so far
+			// 3) track what we've processed so far
 			d_sequenceTracker.writeLastIndex(fName);
+
 
 		} catch(Exception ex ) {
 			s_log.error(ex.getMessage(), ex);
