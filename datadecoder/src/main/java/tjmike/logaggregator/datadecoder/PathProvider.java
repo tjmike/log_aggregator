@@ -21,14 +21,12 @@ public class PathProvider {
 	static final String s_PBDataExtension = ".pbData";
 
 	// Directory for the server log cache as a string
-	@Value("${Server.LogCacheDir}")
 	private String d_logCacheDirName;
 	// Directory for the agent log cache as a path - created from string
 	private Path d_logCacheDir;
 
 
 	// Directory for the server log (rebuilt) as a string
-	@Value("${Server.LogDir}")
 	private String d_rebuiltLogDirName;
 	// Directory for rebuilt logs
 	private Path d_rebuiltLogDir;
@@ -36,14 +34,20 @@ public class PathProvider {
 	private static final Logger s_log = LoggerFactory.getLogger(PathProvider.class);
 
 
-
+	public PathProvider(
+		@Value("${Server.LogCacheDir}") String logCacheDirName,
+		@Value("${Server.LogDir}") String rebuiltLogDirName)
+	{
+		d_logCacheDirName = logCacheDirName;
+		d_rebuiltLogDirName = rebuiltLogDirName;
+	}
 
 	/**
 	 * Initialize directories and last sequence map.
 	 *
 	 */
 	@PostConstruct
-	private void init() {
+	void init() {
 		// Generate a Path from the properties string;
 		try {
 			d_logCacheDir = new File(d_logCacheDirName).getCanonicalFile().toPath();

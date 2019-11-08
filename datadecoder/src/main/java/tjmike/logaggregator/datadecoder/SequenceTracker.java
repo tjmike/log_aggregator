@@ -40,7 +40,7 @@ public class SequenceTracker {
 	 *
 	 */
 	@PostConstruct
-	private void init() {
+	void init() {
 
 		// init the last processed map that keeps track of the last sequence number processed.
 		// This allows the decoder to be stopped and started without missing any data
