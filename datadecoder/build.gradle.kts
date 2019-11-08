@@ -38,6 +38,9 @@ dependencies {
     implementation(files("proto/build/libs/proto.jar"))
 
 
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude("junit","junit")
+    }
 
 }
 
@@ -45,6 +48,15 @@ application {
     mainClassName = "tjmike.logaggregator.datadecoder.DataDecoder"
 }
 
+
+tasks {
+    // Use the built-in JUnit support of Gradle.
+    "test"(Test::class) {
+        useJUnitPlatform() {
+            excludeEngines("junit-vintage")
+        }
+    }
+}
 
 configure<SourceSetContainer> {
     named("main") {
