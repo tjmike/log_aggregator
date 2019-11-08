@@ -2,19 +2,18 @@ package tjmike.logaggregator.datadecoder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  *
@@ -24,17 +23,17 @@ import java.util.Map;
 @Component("SequenceTracker")
 public class SequenceTracker {
 
-	// Directory for the server log (rebuilt) as a string
-	@Value("${Server.LogDir}")
-	private String d_rebuiltLogDirName;
-	// Directory for rebuilt logs
-	private Path d_rebuiltLogDir;
-
 	private static final Logger s_log = LoggerFactory.getLogger(SequenceTracker.class);
 
 	// The last index for the given log file session (log file + session)
 	// This is populated at startup and updated when we do a write.
 	private final Map<String, Long> d_lastIndexes = new HashMap<>();
+
+	private PathProvider d_pathProvider;
+
+	public SequenceTracker(PathProvider pathProvider) {
+		d_pathProvider = pathProvider;
+	}
 
 	/**
 	 * Initialize directories and last sequence map.
@@ -43,24 +42,13 @@ public class SequenceTracker {
 	@PostConstruct
 	private void init() {
 
-		// Build the reconstituted log path from the properties string
-		try {
-			d_rebuiltLogDir = new File(d_rebuiltLogDirName).getCanonicalFile().toPath();
-			if( !Files.exists(d_rebuiltLogDir)) {
-				Files.createDirectories(d_rebuiltLogDir);
-			}
-
-		} catch(Exception ex ) {
-			s_log.error(ex.getMessage(), ex);
-		}
-
 		// init the last processed map that keeps track of the last sequence number processed.
 		// This allows the decoder to be stopped and started without missing any data
-		try {
-			// Lets init our last processed info
-			Files.list(d_rebuiltLogDir)
-				.filter((p) -> p.getFileName().toString().endsWith(".lastSeq"))
-				.forEach((p) -> initFromLastSequence(p.getFileName().toString()));
+
+
+		try(Stream<Path>files = Files.list(d_pathProvider.getRebuiltLogDir())) {
+				files.filter((p) -> p.getFileName().toString().endsWith(".lastSeq"))
+				.forEach(this::initFromLastSequence);
 		} catch(IOException ex ) {
 			s_log.error(ex.getMessage(), ex);
 		}
@@ -71,17 +59,18 @@ public class SequenceTracker {
 	/**
 	 * Read the last index we processed from the directory.
 	 * Should be called only at startup.
-	 * @param fileName
+	 * @param toRead
 	 */
-	private void initFromLastSequence(String fileName) {
+	private void initFromLastSequence(Path toRead) {
+
 		try {
-			Path toRead = d_rebuiltLogDir.resolve(fileName);
+//			Path toRead = d_rebuiltLogDir.resolve(fileName);
 			if( Files.exists(toRead)) {
 				try (BufferedReader br = Files.newBufferedReader(toRead)) {
 
 					String line = br.readLine();
 					try {
-						d_lastIndexes.put(fileName, Long.parseLong(line));
+						d_lastIndexes.put(toRead.getFileName().toString(), Long.parseLong(line));
 					} catch(NumberFormatException ex) {
 						s_log.error(ex.getMessage(), ex);
 					}
@@ -135,7 +124,7 @@ public class SequenceTracker {
 			// NOTE: we could, in theory, call this from a shutdown hook so we don't need to perform
 			// an open/write/close so often
 			String fileName = generateLastSequenceFileName(fName);
-			Path toWrite = d_rebuiltLogDir.resolve(fileName);
+			Path toWrite = d_pathProvider.getRebuiltLogDir().resolve(fileName);
 			if( s_log.isDebugEnabled()) {
 				s_log.debug("WRITE IDX: " + toWrite.toString() + " idx: " + fName.getSequence());
 			}
