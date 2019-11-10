@@ -20,8 +20,6 @@ public class PathProvider {
 	private final List<String> d_logFiles;
 	private List<LogTail> d_logTailFiles;
 
-
-
 	private final String d_logCacheDirName;
 	private Path d_logCacheDir;
 
@@ -40,7 +38,7 @@ public class PathProvider {
 
 
 	/**
-	 * Initialize directories and last sequence map.
+	 * Initialize directories.
 	 *
 	 */
 	@PostConstruct

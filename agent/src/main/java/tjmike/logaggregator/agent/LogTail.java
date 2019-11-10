@@ -67,7 +67,7 @@ class LogTail {
 		 */
 		DELETED,
 		/**
-		 * New data was detected (size > total bytes read
+		 * New data was detected (size > total bytes read)
 		 */
 		NEWDATA,
 		/**
@@ -76,7 +76,7 @@ class LogTail {
 		UNCHANGED,
 		/**
 		 * The file was truncated current size < bytes read. This is really an error condition,
-		 * buy we make an effort to deal with it.
+		 * but we make an effort to deal with it.
 		 */
 		TRUNCATED
 	}
@@ -106,7 +106,7 @@ class LogTail {
 	 * @return
 	 * @throws IOException
 	 */
-	private STATUS status() throws IOException {
+	 STATUS status() throws IOException {
 		STATUS status;
 
 		if( Files.exists(d_path) ) {
@@ -187,6 +187,12 @@ class LogTail {
 	}
 
 
+	/**
+	 * Reset the input stream. If it's open close it and open it again, otherwise open it.
+	 *
+	 * @param shouldSeek - start at the end of data in the file
+	 * @throws IOException
+	 */
 	private void resetInputStream(boolean shouldSeek) throws IOException {
 		long seek = 0;
 		if( d_inputStream != null ) {
@@ -206,6 +212,15 @@ class LogTail {
 			}
 		}
 	}
+
+	/**
+	 *
+	 * Read up to data.length bytes, keep track of the data sequence and total number of bytes
+	 *
+	 * @param data
+	 * @return #bytes read
+	 * @throws IOException
+	 */
 	private int read(byte[] data) throws IOException {
 		if( s_log.isDebugEnabled() ) {
 			s_log.debug("READ BEGIN : total read = " + d_totalRead);
@@ -213,7 +228,6 @@ class LogTail {
 		int nRead = d_inputStream.read(data);
 		if (nRead > 0) {
 			d_totalRead += nRead;
-
 			++d_sequence;
 		}
 		if( s_log.isDebugEnabled() ) {
