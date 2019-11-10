@@ -24,7 +24,7 @@ public class DataPumpTests {
 	public TemporaryFolder d_testFolder = new TemporaryFolder();
 
 	@Test
-	public void invalidCacheDirTest() throws Exception {
+	public void writeReadTest() throws Exception {
 
 		File testRoot = d_testFolder.getRoot();
 		Path testParent = testRoot.toPath();
@@ -54,6 +54,7 @@ public class DataPumpTests {
 		LogTailResult ltr = new LogTailResult(
 			sessionID, fName, sequence, bytes, status
 		);
+		// process the result  -> write
 		dp.process(ltr,buff);
 
 		String resultFile = DataPumpImpl.generateFileName(ltr);
@@ -70,6 +71,7 @@ public class DataPumpTests {
 		LoggerProtos.LogPart lp = LoggerProtos.LogPart.parseFrom(all);
 
 
+		// Read data back and check fields
 		Assert.assertEquals("File Size", 100, lp.getPayload().size());
 
 		Assert.assertEquals("FileName/ID",lp.getId(),fName );
