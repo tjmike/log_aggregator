@@ -1,4 +1,4 @@
-# DataStax Log Aggregator Programming Assignment
+# Log Aggregator 
 
 ## To run the program
 These instructions have been tested on a Mac. I would expect them to work on Linux as well. This 
@@ -60,8 +60,8 @@ project was built and tested with JDK11. The web server uses port 8080.
     Here's an example output:
     
     ```
-    2019-10-28 22:23:18.716  WARN 40052 --- [  DPumpPusher-1] tjmike.datastax.datapump.AsyncPusher     : Will sleep: 120000
-     2019-10-28 22:25:18.728  INFO 40052 --- [  DPumpPusher-1] tjmike.datastax.datapump.AsyncPusher     : PUSH: log3.log_1572314081_260.pbData Code: 200 Message: Throttle: 120
+    2019-10-28 22:23:18.716  WARN 40052 --- [  DPumpPusher-1] tjmike.logaggregator.datapump.AsyncPusher     : Will sleep: 120000
+     2019-10-28 22:25:18.728  INFO 40052 --- [  DPumpPusher-1] tjmike.logaggregator .datapump.AsyncPusher     : PUSH: log3.log_1572314081_260.pbData Code: 200 Message: Throttle: 120
     ```
     
     We can see tha the the the DataPumpPusher got the throttle message and went to sleep for 2 minutes. This
@@ -261,8 +261,8 @@ something like Fargate.
 The file watch service occasionally throws an exception:
 ```
 JNA: Callback io.methvin.watchservice.MacOSXListeningWatchService$MacOSXListeningCallback@3013909b threw the following exception:
-java.lang.IllegalStateException: Could not recursively list files for /Users/mike/mm/code/dxs/datastax/AgentLogCache/
-Caused by: java.nio.file.NoSuchFileException: /Users/mike/mm/code/dxs/datastax/AgentLogCache/log2.log_1572297490_1786.pbData.tmp
+java.lang.IllegalStateException: Could not recursively list files for {PATH}/AgentLogCache/
+Caused by: java.nio.file.NoSuchFileException:  {PATH}/AgentLogCache/log2.log_1572297490_1786.pbData.tmp
 ``` 
 
 This appears to be related to the file system changing state in the middle of a watch operation. The exception doesn't

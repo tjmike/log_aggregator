@@ -27,8 +27,9 @@ import java.nio.file.StandardCopyOption;
  *
  */
 
-@RestController("tjmike.datastax.logServer.LogServerController")
-public class LogServerController {
+@RestController("LogServerController")
+public class
+LogServerController {
 	private static final Logger s_log = LoggerFactory.getLogger(LogServerController.class);
 	static final String s_AliveMessage = "Log Server Is Alive";
 	// some metrics for this instance
